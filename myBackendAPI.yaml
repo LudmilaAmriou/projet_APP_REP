@@ -1,0 +1,220 @@
+# -----------------------------------
+# API Documentation for Projet_APP_REP
+# -----------------------------------
+
+base_url: "http://127.0.0.1:8000" # Will change later
+
+version: "1.0"
+description: "Documentation des endpoints backend pour le projet TP – Région BRESIL"
+
+services:
+  - name: "General"
+    description: "Endpoints génériques pour consulter toutes les tables et stats"
+    endpoints:
+      - name: "Liste des tables"
+        method: GET
+        path: "/general/tables"
+        description: "Retourne la liste de toutes les tables existantes dans la base"
+        output:
+          tables:
+            type: array
+            items: string
+
+      - name: "Personnel"
+        method: GET
+        path: "/general/personnel"
+        description: "Retourne tous les membres du personnel"
+        output:
+          - id: string
+          - nom_prenom: string
+          - etat: string
+          - service: string
+          - frequence_cardiaque: int
+          - position: string
+
+      - name: "Articles"
+        method: GET
+        path: "/general/articles"
+        description: "Retourne tous les articles"
+        output:
+          - id: int
+          - zone: int
+          - etat_emballage: string
+          - responsable_id: string
+          - position: string
+          - rotation: string
+          - collisions: int
+
+      - name: "Operations"
+        method: GET
+        path: "/general/operations"
+        description: "Retourne toutes les opérations commerciales"
+        output:
+          - id: int
+          - type_op: string
+          - responsable_id: string
+          - marge: float
+          - km_parcourus: float
+          - mot_cle_responsable: string
+          - mot_cle_client: string
+
+      - name: "Formations"
+        method: GET
+        path: "/general/formations"
+        description: "Retourne toutes les formations"
+        output:
+          - id: int
+          - nom_formation: string
+          - sujet: string
+          - date_formation: string (ISO)
+          - pourcentage_engagement: float
+          - pourcentage_satisfaction: float
+          - mot_cle_formateur: string
+          - mot_cle_personnel: string
+
+      - name: "Surveillance"
+        method: GET
+        path: "/general/surveillance"
+        description: "Retourne toutes les zones de surveillance"
+        output:
+          - zone: int
+          - drones_actifs: int
+          - drones_panne: int
+          - drones_rechargement: int
+          - detection_incendie: boolean
+          - detection_forme: string
+          - audit_conformite: boolean
+
+  - name: "Finance & Contrôle de Gestion"
+    description: "Endpoints liés aux opérations financières et gestion des drones"
+    endpoints:
+      - name: "Responsable ayant parcouru le plus de km"
+        method: GET
+        path: "/finance_gestion/responsable/max_km"
+        description: "Retourne le membre du personnel ayant parcouru le plus de km"
+        output:
+          responsable: string
+          identifiant: string
+          total_km_parcourus: float
+
+      - name: "Drone le plus ancien (simulé)"
+        method: GET
+        path: "/finance_gestion/drone/plus_ancien"
+        description: "Retourne la zone avec le drone le plus ancien, déduit de drones en panne et rechargement"
+        output:
+          zone: int
+          drone_age: int
+          drones_panne: int
+          drones_rechargement: int
+
+      - name: "Marge totale par responsable"
+        method: GET
+        path: "/finance_gestion/marges_par_responsable"
+        description: "Retourne la marge totale par responsable (pour graphiques)"
+        output:
+          - responsable: string
+          - total_marge: float
+
+      - name: "Nombre d'opérations par type"
+        method: GET
+        path: "/finance_gestion/operations_par_type"
+        description: "Retourne le nombre d'opérations par type (Achat/Vente) pour graphiques"
+        output:
+          - type_op: string
+          - count: int
+
+  - name: "Assistance Commerciale"
+    description: "Endpoints liés aux zones et aux responsables commerciaux"
+    endpoints:
+      - name: "Zone avec CO2 le plus faible"
+        method: GET
+        path: "/assistance_commerciale/zone/co2_min"
+        description: "Retourne la zone avec le niveau de CO2 déduit le plus faible"
+        output:
+          zone: int
+          deduced_co2_level: float
+          drones_actifs: int
+          drones_panne: int
+          drones_rechargement: int
+          detection_incendie: boolean
+          audit_conformite: boolean
+
+      - name: "Nombre de responsables en vente"
+        method: GET
+        path: "/assistance_commerciale/responsables_vente"
+        description: "Retourne le nombre de membres du personnel ayant réalisé au moins une vente"
+        output:
+          nombre_responsables_vente: int
+
+      - name: "Zone avec le plus de drones disponibles"
+        method: GET
+        path: "/assistance_commerciale/zone/max_drones"
+        description: "Retourne la zone avec le plus grand nombre de drones actifs + rechargement"
+        output:
+          zone: int
+          total_operational_drones: int
+          drones_actifs: int
+          drones_rechargement: int
+
+      - name: "Zone à risque maximal"
+        method: GET
+        path: "/assistance_commerciale/zone/risk_score"
+        description: "Retourne la zone présentant le risque opérationnel le plus élevé"
+        output:
+          zone: int
+          risk_score: int
+          drones_panne: int
+          detection_incendie: boolean
+          audit_conformite: boolean
+
+      - name: "CO2 pour toutes les zones (graph)"
+        method: GET
+        path: "/assistance_commerciale/zones/co2_all"
+        description: "Retourne toutes les zones avec leur niveau de CO2 déduit pour graphiques"
+        output:
+          - zone: int
+          - deduced_co2_level: float
+
+      - name: "Distribution des drones par zone (graph)"
+        method: GET
+        path: "/assistance_commerciale/zones/drones_distribution"
+        description: "Retourne la répartition des drones par zone pour graphiques"
+        output:
+          - zone: int
+          - total_drones: int
+          - drones_actifs: int
+          - drones_rechargement: int
+
+  - name: "Recherche & Développement"
+    description: "Endpoints liés aux articles et machines"
+    endpoints:
+      - name: "Articles déformés sans collision"
+        method: GET
+        path: "/recherche_developpement/articles/deformes_sans_collision"
+        description: "Retourne le nombre d'articles avec emballage déformé sans collisions"
+        output:
+          articles_deformes_sans_collision: int
+
+      - name: "Machine avec la plus faible cadence"
+        method: GET
+        path: "/recherche_developpement/machine/faible_cadence"
+        description: "Retourne la zone/machine avec la plus faible cadence, calcul déduit"
+        output:
+          zone_machine: int
+          cadence: int
+
+      - name: "Répartition articles par état d'emballage (graph)"
+        method: GET
+        path: "/recherche_developpement/articles/repartition_emballage"
+        description: "Retourne la répartition des articles par état d'emballage"
+        output:
+          - etat_emballage: string
+          - count: int
+
+      - name: "Collisions par zone (graph)"
+        method: GET
+        path: "/recherche_developpement/articles/collisions_par_zone"
+        description: "Retourne le nombre total de collisions par zone"
+        output:
+          - zone: int
+          - collisions_totales: int
