@@ -89,3 +89,9 @@ def operations_par_type():
 
     data = [{'type_op': r[0].value, 'count': r[1]} for r in results]
     return jsonify(data)
+
+
+
+@finance_bp.route("/cors-test")
+def cors_test():
+    return jsonify({"ok": True})

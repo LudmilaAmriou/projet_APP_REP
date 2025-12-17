@@ -1,5 +1,5 @@
 from flask import Flask
-from flask_cors import CORS
+
 from ..couche_data.db_connect import create_app
 from .assistance_commerciale import assistance_bp
 from .general import general_bp
@@ -11,9 +11,6 @@ from .finance_gestion import finance_bp
 app = create_app()
 
 
-
-# Enable CORS for all routes (any frontend can access) 
-CORS(app)
 # Register blueprints
 app.register_blueprint(assistance_bp)
 app.register_blueprint(general_bp)
