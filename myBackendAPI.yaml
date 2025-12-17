@@ -2,7 +2,7 @@
 # API Documentation for Projet_APP_REP
 # -----------------------------------
 
-base_url: "http://127.0.0.1:8000" # Will change later
+base_url: "https://projet-app-rep.onrender.com" # Will change later
 
 version: "1.0"
 description: "Documentation des endpoints backend pour le projet TP – Région BRESIL"

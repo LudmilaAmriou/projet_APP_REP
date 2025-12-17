@@ -1,7 +1,7 @@
 // src/api/config.js
 
 export const BASE_URLS = {
-  brazil: "http://127.0.0.1:5000",
+  brazil: "https://projet-app-rep.onrender.com",
   france: "https://france-backend.example.com",
   canada: "https://canada-backend.example.com",
   egypte: "https://canada-backend.example.com",

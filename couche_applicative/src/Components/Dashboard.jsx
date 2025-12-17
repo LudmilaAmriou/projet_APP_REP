@@ -1,21 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import GraphCard from './GraphCard';
-import TableCard from './TableCard';
-import apiService from '../services/apiService';
+// import TableCard from './TableCard';
+import { fetchData } from '../helpers/endpoints'; 
 
 const Dashboard = ({ service }) => {
   const [data, setData] = useState({}); // Dynamic storage for any service
 
   useEffect(() => {
-    const fetchData = async () => {
+    const getData = async () => {
       try {
-        const res = await apiService.getServiceData(service);
-        setData(res); // backend should return JSON with A/B/C/D endpoints
+        // For now, fetch Finance / Brazil only
+        if (service === "Finance & contrôle de gestion") {
+          const res = await fetchData(service, "C", "brazil"); // C = marges_par_responsable
+          setData(res);
+        }
       } catch (err) {
         console.error(err);
       }
     };
-    fetchData();
+    getData();
   }, [service]);
 
   if (!data || Object.keys(data).length === 0)
@@ -27,6 +30,7 @@ const Dashboard = ({ service }) => {
       {Object.entries(data).map(([key, value]) => {
         if (Array.isArray(value))
           return <GraphCard key={key} title={key} data={value} />;
+
         return (
           <div key={key} className="bg-white shadow-lg rounded-lg p-4 h-80">
             <h3 className="text-lg font-semibold mb-2">{key}</h3>

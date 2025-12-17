@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import Navbar from './components/Navbar';
-import HomePage from './components/HomePage';
-import financeService from './services/financeService';
+import { useState, useEffect } from 'react';
+import Navbar from './Components/NavBar';
+import HomePage from './Components/Dashboard';
+import financeService from './Services/FinanceService';
 
 const App = () => {
   const services = [
@@ -25,7 +25,11 @@ const App = () => {
 
   return (
     <div className="bg-gray-100 min-h-screen">
-      <Navbar services={services} selectedService={selectedService} onSelect={setSelectedService} />
+      <Navbar
+        services={services}
+        selectedService={selectedService}
+        onSelect={setSelectedService}
+      />
       <HomePage selectedService={selectedService} financeData={financeData} />
     </div>
   );

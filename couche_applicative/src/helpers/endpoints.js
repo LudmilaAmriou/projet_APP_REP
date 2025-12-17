@@ -1,6 +1,5 @@
 // src/api/endpoints.js
 
-export const MY_BASE_URL = "http://127.0.0.1:5000"; // Brazil backend
 import { BASE_URLS } from './base_urls';
 
 
@@ -23,7 +22,7 @@ export const API_ENDPOINTS = {
     },
     B: {
       brazil: [`${BASE_URLS.brazil}/finance_gestion/drone/plus_ancien`],
-      egypte : [`${BASE_URL}/finance_gestion/drone/plus_ancien`]
+      egypte : [`${BASE_URLS.egypte}/finance_gestion/drone/plus_ancien`]
     },
     C: {
       brazil: [`${BASE_URLS.brazil}/finance_gestion/marges_par_responsable`]
@@ -59,10 +58,11 @@ export const API_ENDPOINTS = {
   },
   "Assistance Technique": {
     A: {
-      brazil: [`${BASE_URL}/assistance_commerciale/zone/co2_min`]
+      brazil: [`${BASE_URLS.brazil}/assistance_commerciale/zone/co2_min`]
     }
   }
 };
+
 
 // Fetch helper (tries all endpoints for a country)
 export async function fetchData(service, metric, country = "brazil") {
