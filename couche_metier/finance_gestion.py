@@ -92,6 +92,6 @@ def operations_par_type():
 
 
 
-@finance_bp.route("/cors-test")
-def cors_test():
-    return jsonify({"ok": True})
+# @finance_bp.route("/cors-test")
+# def cors_test():
+#     return jsonify({"ok": True})

@@ -1,6 +1,5 @@
 // src/services/FinanceService.jsx
-import { fetchData } from '../helpers/endpoints.js'; // match your folder
-
+import { fetchData } from '../helpers/endpoints.js'; 
 const financeService = {
   getOldestDrone: async () => {
     return fetchData("Finance & Contrôle de Gestion", "B");

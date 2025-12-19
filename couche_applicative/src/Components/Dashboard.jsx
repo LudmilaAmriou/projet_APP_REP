@@ -1,43 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import GraphCard from './GraphCard';
-// import TableCard from './TableCard';
-import { fetchData } from '../helpers/endpoints'; 
+import React from 'react';
 
-const Dashboard = ({ service }) => {
-  const [data, setData] = useState({}); // Dynamic storage for any service
+const Dashboard = ({ selectedService, financeData }) => {
+  if (!financeData) {
+    return (
+      <div className="flex justify-center items-center mt-20">
+        <p className="text-gray-500 text-lg animate-pulse">Chargement des données...</p>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    const getData = async () => {
-      try {
-        // For now, fetch Finance / Brazil only
-        if (service === "Finance & contrôle de gestion") {
-          const res = await fetchData(service, "C", "brazil"); // C = marges_par_responsable
-          setData(res);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
-    getData();
-  }, [service]);
-
-  if (!data || Object.keys(data).length === 0)
-    return <p className="text-center mt-10 text-gray-500">Chargement des données...</p>;
-
-  // Example rendering: adapt keys dynamically
   return (
     <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {Object.entries(data).map(([key, value]) => {
-        if (Array.isArray(value))
-          return <GraphCard key={key} title={key} data={value} />;
+  
+      <div className="bg-white shadow-lg rounded-xl p-6 hover:shadow-2xl transition-shadow duration-300">
+        <h2 className="text-xl font-bold text-blue-700 mb-4">{selectedService}</h2>
+        <div className="space-y-2 text-gray-700">
+          {Object.entries(financeData).map(([key, value]) => (
+            <div key={key} className="border-l-4 border-blue-500 pl-4 py-2 rounded bg-blue-50 hover:bg-blue-100 transition-colors">
+              <p className="font-semibold">{key}</p>
+              <pre className="text-sm overflow-auto">{JSON.stringify(value, null, 2)}</pre>
+            </div>
+          ))}
+        </div>
+      </div>
 
-        return (
-          <div key={key} className="bg-white shadow-lg rounded-lg p-4 h-80">
-            <h3 className="text-lg font-semibold mb-2">{key}</h3>
-            <pre className="text-sm overflow-auto">{JSON.stringify(value, null, 2)}</pre>
-          </div>
-        );
-      })}
+     
     </div>
   );
 };

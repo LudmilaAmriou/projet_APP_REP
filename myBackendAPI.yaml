@@ -2,7 +2,7 @@
 # API Documentation for Projet_APP_REP
 # -----------------------------------
 
-base_url: "https://projet-app-rep.onrender.com" # Will change later
+base_url: "https://projet-app-rep.onrender.com"
 
 version: "1.0"
 description: "Documentation des endpoints backend pour le projet TP – Région BRESIL"
