@@ -34,6 +34,7 @@ def responsable_max_km():
         id_field="id",
         value_field="nomPrenom"
     )
+   
 
     # Global max
     agg = df_all.groupby("responsable_id", as_index=False)["km"].sum()

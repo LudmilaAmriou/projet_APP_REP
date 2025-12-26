@@ -63,35 +63,43 @@ def build_id_map(local_query=None, external_key=None, id_field=None, value_field
     Builds a dict mapping ID -> value from local DB and external APIs.
 
     Args:
-        local_query: SQLAlchemy query returning id_field and value_field
+        local_query: SQLAlchemy query returning id_field and value_field or full objects
         external_key: key in EXTERNAL_APIS (like 'personnel', 'operations', etc.)
         id_field: column name to use as key (id)
-        value_field: column name to use as value (name or other human-readable field)
+        value_field: column name to use as value (name or human-readable field)
 
     Returns:
         dict {id: value}
     """
     id_map = {}
 
-    # --- Local DB ---
+    # ---------------------------
+    # Local DB
+    # ---------------------------
     if local_query is not None:
-        for row in local_query.all():
-            key = getattr(row, id_field, None)
-            val = getattr(row, value_field, None)
-            if key is not None and val is not None:
-                id_map[key] = val
+        rows = local_query.all()
+        if rows:
+            df_local = pd.DataFrame(rows, columns=[id_field, value_field])
+            df_local = df_local.dropna(subset=[id_field, value_field])
+            id_map.update(df_local.set_index(id_field)[value_field].astype(str).to_dict())
 
-    # --- External APIs ---
+    # ---------------------------
+    # External APIs
+    # ---------------------------
     for cfg in EXTERNAL_APIS.get(external_key, {}).values():
         try:
             ext_data = requests.get(cfg["url"], timeout=5).json()
             rename_map = cfg.get("rename_map", {})
             ext_id_field = rename_map.get(id_field, id_field)
             ext_value_field = rename_map.get(value_field, value_field)
-            
-            for row in ext_data:
-                if ext_id_field in row and ext_value_field in row:
-                    id_map[row[ext_id_field]] = row[ext_value_field]
+
+            df_ext = pd.DataFrame(ext_data)
+            if ext_id_field in df_ext.columns and ext_value_field in df_ext.columns:
+                df_ext = df_ext.dropna(subset=[ext_id_field, ext_value_field])
+                id_map.update(
+                    df_ext.set_index(ext_id_field)[ext_value_field].astype(str).to_dict()
+                )
+
         except Exception as e:
             print(f"Error fetching {external_key} from {cfg.get('url')}: {e}")
             continue
