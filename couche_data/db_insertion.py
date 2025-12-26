@@ -1,8 +1,8 @@
 from faker import Faker
 import random
 from datetime import date, timedelta
-from .db_connect import create_app, db
-from .db_tables import ServicePersonnel, EtatPersonnel, Personnel, OperationCommerciale, TypeOperation, Article, EtatEmballage, Surveillance, Formation, DetectionForme
+from couche_data.db_connect import create_app, db
+from couche_data.db_tables import ServicePersonnel, EtatPersonnel, Personnel, OperationCommerciale, TypeOperation, Article, EtatEmballage, Surveillance, Formation, DetectionForme
 
 fake = Faker('fr_FR')
 

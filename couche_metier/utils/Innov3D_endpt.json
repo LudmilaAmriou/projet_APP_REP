@@ -1,0 +1,32 @@
+{
+  "operations": {
+    "Egypte": {
+      "url": "https://projet-application-r-parties.onrender.com/operations",
+      "rename_map": {"responsable": "responsable_id", "kilometres": "km", "marge": "marge", "type": "type_op"}
+    }
+  },
+  "personnel": {
+    "Egypte": {
+      "url": "https://projet-application-r-parties.onrender.com/personnel",
+      "rename_map": {"id": "id", "nomPrenom": "nomPrenom"}
+    }
+  },
+  "releves": {
+    "Egypte": {
+      "url": "https://projet-application-r-parties.onrender.com/releves",
+      "rename_map": {"zone": "zone", "releve_id": "id", "temperature": "temperature", "humidite": "humidite", "pression": "pression", "co2": "co2", "pm10": "pm10", "pm25": "pm25"}
+    }
+  },
+    "articles": {
+    "Egypte": {
+      "url": "https://projet-application-r-parties.onrender.com/articles",
+      "rename_map": {"id": "id", "zone": "zone", "etatEmballage": "etat_emballage", "responsable": "responsable_id", "collisions": "collisions"}
+    }
+  },
+    "machines": {
+    "?": {
+      "?": "?",
+      "rename_map": {"zone": "zone", "cadence": "cadence_de_production", "etat": "etat"}
+    }
+  }
+}

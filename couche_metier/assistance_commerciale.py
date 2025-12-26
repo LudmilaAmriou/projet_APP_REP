@@ -1,7 +1,9 @@
 from flask import Blueprint, jsonify
 from couche_data.db_connect import db
-from couche_data.db_tables import Personnel, OperationCommerciale, Surveillance, TypeOperation
+from couche_data.db_tables import  OperationCommerciale
 from flask import Blueprint, jsonify
+from couche_metier.utils.data_agregation import aggregate_data_multi
+
 
 assistance_bp = Blueprint('assistance', __name__, url_prefix='/assistance_commerciale')
 
@@ -11,38 +13,29 @@ assistance_bp = Blueprint('assistance', __name__, url_prefix='/assistance_commer
 @assistance_bp.route('/zone/co2_min')
 def zone_co2_min():
     """
-    Retourne la zone avec le niveau de CO2 le plus faible.
-    Le niveau de CO2 est déduit à partir des drones actifs, drones en panne,
-    drones en rechargement, détection incendie et conformité audit.
+    Returns the zone with the lowest CO2 level from external 'releves' API.
     """
-    zones = db.session.query(Surveillance).all()
-    if not zones:
-        return jsonify({'error': 'Aucune zone trouvée'}), 404
 
-    min_zone = None
-    min_co2 = None
+    # --- Aggregate only external 'releves' data ---
+    df_all, sources_responded = aggregate_data_multi(
+        external_key="releves",
+        id_col="zone",
+        value_cols=["co2"],
+        local_source=None  # no local DB
+    )
 
-    for z in zones:
-        # Formule de calcul déduit du CO2
-        co2_level = 1000
-        co2_level -= z.drones_actifs * 80
-        co2_level += z.drones_panne * 60
-        co2_level += z.drones_rechargement * 30
-        co2_level += 100 if z.detection_incendie else 0
-        co2_level -= 50 if z.audit_conformite else 0
+    if df_all.empty:
+        return jsonify({"error": "No releves data available"}), 404
 
-        if min_co2 is None or co2_level < min_co2:
-            min_co2 = co2_level
-            min_zone = z
+    # --- Pick the zone with minimum CO2 ---
+    min_row = df_all.loc[df_all["co2"].idxmin()]
 
     return jsonify({
-        'zone': min_zone.zone,
-        'deduced_co2_level': round(min_co2, 2),
-        'drones_actifs': min_zone.drones_actifs,
-        'drones_panne': min_zone.drones_panne,
-        'drones_rechargement': min_zone.drones_rechargement,
-        'detection_incendie': min_zone.detection_incendie,
-        'audit_conformite': min_zone.audit_conformite
+        "zone": min_row["zone"],
+        "co2_level": round(min_row["co2"], 2),
+        "source": min_row["source"],
+        "sources_responded": sources_responded,
+        "num_sources_responded": len(sources_responded)
     })
 
 
@@ -52,125 +45,102 @@ def zone_co2_min():
 @assistance_bp.route('/responsables_vente')
 def responsables_vente():
     """
-    Retourne le nombre de membres du personnel ayant effectué au moins
-    une opération commerciale de type 'vente'.
+    Returns the number of personnel who performed at least one 'vente' operation,
+    aggregating local DB + external APIs.
     """
-    count = db.session.query(Personnel)\
-        .join(OperationCommerciale)\
-        .filter(OperationCommerciale.type_op == TypeOperation.vente)\
-        .distinct()\
-        .count()
-    return jsonify({'nombre_responsables_vente': count})
+    # --- 1) Aggregate local + external 'operations' data ---
+    df_all, sources_responded = aggregate_data_multi(
+        local_query=db.session.query(
+            OperationCommerciale.responsable_id,
+            OperationCommerciale.id,  # just to count operations
+            OperationCommerciale.type_op
+        ).filter(OperationCommerciale.type_op == 'vente'),  # or TypeOperation.vente.value if Enum
+        external_key="operations",
+        id_col="responsable_id",
+         value_cols=["id", "type_op"], # we just need to count operations
+        local_source="local (Brésil)"
+    )
 
+    if df_all.empty:
+        return jsonify({"nombre_responsables_vente": 0, "sources_responded": [], "num_sources_responded": 0})
 
-# -----------------------------
-# C - Zone avec le plus de drones disponibles (actifs + rechargement)
-# -----------------------------
-@assistance_bp.route('/zone/max_drones')
-def zone_max_drones():
-    """
-    Retourne la zone ayant le plus grand nombre de drones disponibles
-    (drones actifs + drones en rechargement), utile pour visualisation.
-    """
-    zones = db.session.query(Surveillance).all()
-    if not zones:
-        return jsonify({'error': 'Aucune zone trouvée'}), 404
-
-    max_zone = max(zones, key=lambda z: z.drones_actifs + z.drones_rechargement)
-    total_drones = max_zone.drones_actifs + max_zone.drones_rechargement
+    # --- 2) Count distinct responsables who had at least 1 vente ---
+    df_all = df_all[df_all["type_op"].str.lower() != "achat"]
+    distinct_count = df_all["responsable_id"].nunique()
 
     return jsonify({
-        'zone': max_zone.zone,
-        'total_operational_drones': total_drones,
-        'drones_actifs': max_zone.drones_actifs,
-        'drones_rechargement': max_zone.drones_rechargement
+        "nombre_responsables_vente": int(distinct_count),
+        "sources_responded": sources_responded,
+        "num_sources_responded": len(sources_responded)
     })
 
 
 # -----------------------------
-# D - Zone à risque maximal (métrique personnalisée)
+# C - Zone avec le CO2 minimum par source
 # -----------------------------
-@assistance_bp.route('/zone/risk_score')
-def zone_risk_score():
+@assistance_bp.route('/zone/co2_min_per_source')
+def zone_co2_min_per_source():
     """
-    Retourne la zone présentant le risque opérationnel le plus élevé.
-    Le score de risque est calculé en fonction des drones en panne,
-    de la détection d'incendie et de la non-conformité à l'audit.
+    Returns the zone with the lowest CO2 level per source (external APIs only, grouped by country).
     """
-    zones = db.session.query(Surveillance).all()
-    if not zones:
-        return jsonify({'error': 'Aucune zone trouvée'}), 404
+    # Aggregate only external 'releves' data
+    df_all, sources_responded = aggregate_data_multi(
+        external_key="releves",
+        id_col="zone",
+        value_cols=["co2"],
+        local_source=None  # no local DB
+    )
 
-    def compute_risk(z):
-        score = 0
-        score += z.drones_panne * 2
-        score += 50 if z.detection_incendie else 0
-        score += 20 if not z.audit_conformite else 0
-        return score
+    if df_all.empty:
+        return jsonify({"error": "No releves data available"}), 404
 
-    high_risk_zone = max(zones, key=compute_risk)
-    risk_score = compute_risk(high_risk_zone)
-
-    return jsonify({
-        'zone': high_risk_zone.zone,
-        'risk_score': risk_score,
-        'drones_panne': high_risk_zone.drones_panne,
-        'detection_incendie': high_risk_zone.detection_incendie,
-        'audit_conformite': high_risk_zone.audit_conformite
-    })
-
-
-# -----------------------------
-# E- CO2 déduit pour toutes les zones (pour graphique)
-# -----------------------------
-@assistance_bp.route('/zones/co2_all')
-def zones_co2_all():
-    """
-    Retourne toutes les zones avec leur niveau de CO2 déduit.
-    Format idéal pour créer un graphique comparatif.
-    """
-    zones = db.session.query(Surveillance).all()
-    if not zones:
-        return jsonify({'error': 'Aucune zone trouvée'}), 404
-
-    result = []
-    for z in zones:
-        co2_level = 1000
-        co2_level -= z.drones_actifs * 80
-        co2_level += z.drones_panne * 60
-        co2_level += z.drones_rechargement * 30
-        co2_level += 100 if z.detection_incendie else 0
-        co2_level -= 50 if z.audit_conformite else 0
-
-        result.append({
-            'zone': z.zone,
-            'deduced_co2_level': round(co2_level, 2)
+    # Group by source (country) and pick the min CO2 for each
+    result_list = []
+    for source, df_source in df_all.groupby("source"):
+        min_row = df_source.loc[df_source["co2"].idxmin()]
+        result_list.append({
+            "source": source,
+            "zone": min_row["zone"],
+            "co2_level": round(min_row["co2"], 2)
         })
 
-    return jsonify(result)
+    return jsonify(result_list)
 
 
 # -----------------------------
-# F - Distribution des drones par zone (pour graphique)
+# D - Nombre de responsables en vente par source
 # -----------------------------
-@assistance_bp.route('/zones/drones_distribution')
-def drones_distribution():
+@assistance_bp.route('/responsables_vente_per_source')
+def responsables_vente_per_source():
     """
-    Retourne la distribution des drones par zone.
-    Utile pour visualisation (barres, secteurs, etc.).
+    Returns the number of personnel who performed at least one 'vente' operation, grouped by source.
     """
-    zones = db.session.query(Surveillance).all()
-    if not zones:
-        return jsonify({'error': 'Aucune zone trouvée'}), 404
+    # Aggregate local + external 'operations' data
+    df_all, _ = aggregate_data_multi(
+        local_query=db.session.query(
+            OperationCommerciale.responsable_id,
+            OperationCommerciale.id,  # just to count operations
+            OperationCommerciale.type_op
+        ).filter(OperationCommerciale.type_op == 'vente'),  # or TypeOperation.vente.value if Enum
+        external_key="operations",
+        id_col="responsable_id",
+        value_cols=["id", "type_op"],  # counting operations
+        local_source="local (Brésil)"
+    )
 
-    result = []
-    for z in zones:
-        total_drones = z.drones_actifs + z.drones_rechargement
-        result.append({
-            'zone': z.zone,
-            'total_drones': total_drones,
-            'drones_actifs': z.drones_actifs,
-            'drones_rechargement': z.drones_rechargement
+    if df_all.empty:
+        return jsonify([])
+    
+    df_all = df_all[df_all["type_op"].str.lower() != "achat"]
+    distinct_count = df_all["responsable_id"].nunique()
+
+    # Count distinct responsables per source
+    result_list = []
+    for source, df_source in df_all.groupby("source"):
+        distinct_count = df_source["responsable_id"].nunique()
+        result_list.append({
+            "source": source,
+            "nombre_responsables_vente": int(distinct_count)
         })
 
-    return jsonify(result)
+    return jsonify(result_list)

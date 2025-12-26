@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify
 from couche_data.db_connect import db
 from couche_data.db_tables import Article ,EtatEmballage
+from couche_metier.utils.data_agregation import aggregate_data_multi
 
 rd_bp = Blueprint('rd', __name__, url_prefix='/recherche_developpement')
 
@@ -10,42 +11,84 @@ rd_bp = Blueprint('rd', __name__, url_prefix='/recherche_developpement')
 @rd_bp.route('/articles/deformes_sans_collision')
 def articles_deformes_sans_collision():
     """
-    Retourne le nombre d'articles dont l'emballage est déformé
-    mais n'a subi aucune collision.
+    Returns the count of articles whose packaging is deformed
+    but had no collisions, aggregating internal DB + external APIs.
     """
-    count = db.session.query(Article)\
-        .filter(Article.etat_emballage == EtatEmballage.defo)\
-        .filter(Article.collisions == 0)\
-        .count()
+    # --- Aggregate internal + external data ---
+    df_all, sources_responded = aggregate_data_multi(
+        local_query=db.session.query(
+            Article.id,
+            Article.etat_emballage,
+            Article.collisions
+        ),
+        external_key="articles",
+        id_col="id",
+        value_cols=["etat_emballage", "collisions"],
+        local_source="local (DB)"
+    )
 
-    return jsonify({'articles_deformes_sans_collision': count})
+    if df_all.empty:
+        return jsonify({"articles_deformes_sans_collision": 0, "sources_responded": [], "num_sources_responded": 0})
 
+    # --- Normalize etat_emballage to lowercase strings ---
+    if "etat_emballage" in df_all.columns:
+        df_all["etat_emballage"] = df_all["etat_emballage"].apply(lambda x: str(x).split('.')[-1].lower())
+    
+    # --- Filter deformed without collision ---
+    df_filtered = df_all[
+        (df_all["etat_emballage"].isin(["defo", "deformé", "déformé", "abimé", "abim", "abim�"]))  
+        & (df_all["collisions"] == 0)
+    ]
+
+    return jsonify({
+        "articles_deformes_sans_collision": len(df_filtered),
+        "sources_responded": sources_responded,
+        "num_sources_responded": len(sources_responded)
+    })
 
 # -----------------------------
-# B  - Machine avec la plus faible cadence (simulée)
+# B  - Machine avec la plus faible cadence (simulée -- Pas de donnees directes)
 # -----------------------------
 @rd_bp.route('/machine/faible_cadence')
 def machine_faible_cadence():
     """
-    Retourne la 'machine' (zone) avec la plus faible cadence.
-    Pour le TP, on déduit la cadence comme : 10 - collisions (plus il y a de collisions, plus la cadence est faible).
+    Returns the machine (zone) with the lowest cadence across external APIs.
+    Cadence is deduced as: 10 - collisions (for TP simplification).
     """
-    articles = db.session.query(Article).all()
-    if not articles:
-        return jsonify({'error': 'Aucun article trouvé'}), 404
+    # --- Aggregate external 'machines' data ---
+    df_all, sources_responded = aggregate_data_multi(
+        external_key="machines",  # key in EXTERNAL_APIS
+        id_col="zone",
+        value_cols=["cadence_de_production", "etat"],  # we only need cadence for now
+        local_source=None  # no local DB
+    )
 
-    # Calcul simple de cadence pour chaque zone
-    zone_cadence = {}
-    for a in articles:
-        zone_cadence[a.zone] = zone_cadence.get(a.zone, 10) - a.collisions
+    if df_all.empty:
+        return jsonify({
+            'zone_machine': None,
+            'cadence': None,
+            'sources_responded': [],
+            'num_sources_responded': 0
+        })
 
-    # Zone avec la cadence minimale
-    min_zone = min(zone_cadence, key=zone_cadence.get)
-    min_cadence = zone_cadence[min_zone]
+    # --- Compute effective cadence (deduced) ---
+    # If collisions exist, you could subtract them or adjust; for now use cadence as-is
+    df_all["deduced_cadence"] = df_all["cadence_de_production"].astype(float)
+
+    # --- Find machine (zone) with minimum cadence per source ---
+    result_list = []
+    for source, df_source in df_all.groupby("source"):
+        min_row = df_source.loc[df_source["deduced_cadence"].idxmin()]
+        result_list.append({
+            "source": source,
+            "zone_machine": min_row["zone"],
+            "cadence": round(min_row["deduced_cadence"], 2)
+        })
 
     return jsonify({
-        'zone_machine': min_zone,
-        'cadence': min_cadence
+        "machines_faible_cadence": result_list,
+        "sources_responded": sources_responded,
+        "num_sources_responded": len(sources_responded)
     })
 
 
@@ -66,18 +109,50 @@ def repartition_emballage():
     return jsonify(data)
 
 
-# -----------------------------
-# D - Collisions par zone (graph)
-# -----------------------------
-@rd_bp.route('/articles/collisions_par_zone')
-def collisions_par_zone():
-    """
-    Retourne le nombre total de collisions par zone.
-    Utile pour visualisation de la sécurité/logistique.
-    """
-    results = db.session.query(Article.zone, db.func.sum(Article.collisions))\
-        .group_by(Article.zone)\
-        .all()
 
-    data = [{'zone': r[0], 'collisions_totales': int(r[1])} for r in results]
-    return jsonify(data)
+# -----------------------------
+# D -  Articles déformés sans collision (per source)
+# -----------------------------
+@rd_bp.route('/articles/deformes_sans_collision_per_source')
+def articles_deformes_sans_collision_per_source():
+    """
+    Returns the count of articles whose packaging is deformed
+    but had no collisions, aggregated per source (internal DB + external APIs).
+    """
+    # --- Aggregate internal + external data ---
+    df_all, sources_responded = aggregate_data_multi(
+        local_query=db.session.query(
+            Article.id,
+            Article.etat_emballage,
+            Article.collisions
+        ),
+        external_key="articles",
+        id_col="id",
+        value_cols=["etat_emballage", "collisions"],
+        local_source="local (DB)"
+    )
+
+    if df_all.empty:
+        return jsonify({"articles_deformes_sans_collision": [], "sources_responded": [], "num_sources_responded": 0})
+
+    # --- Normalize etat_emballage to lowercase strings ---
+    if "etat_emballage" in df_all.columns:
+        df_all["etat_emballage"] = df_all["etat_emballage"].apply(lambda x: str(x).split('.')[-1].lower())
+
+    # --- Filter deformed without collision ---
+    df_filtered = df_all[
+        (df_all["etat_emballage"].isin(["defo", "deformé", "déformé", "abimé", "abim", "abim�"]))  
+         & (df_all["collisions"] == 0)
+    ]
+
+    # --- Count per source ---
+    counts_per_source = df_filtered.groupby("source").size().reset_index(name="count")
+
+    # --- Convert to list of dicts ---
+    result = counts_per_source.to_dict(orient="records")
+
+    return jsonify({
+        "articles_deformes_sans_collision": result,
+        "sources_responded": sources_responded,
+        "num_sources_responded": len(sources_responded)
+    })

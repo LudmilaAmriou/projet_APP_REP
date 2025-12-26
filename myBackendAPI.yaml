@@ -7,214 +7,504 @@ base_url: "https://projet-app-rep.onrender.com"
 version: "1.0"
 description: "Documentation des endpoints backend pour le projet TP – Région BRESIL"
 
-services:
-  - name: "General"
-    description: "Endpoints génériques pour consulter toutes les tables et stats"
-    endpoints:
-      - name: "Liste des tables"
-        method: GET
-        path: "/general/tables"
-        description: "Retourne la liste de toutes les tables existantes dans la base"
-        output:
-          tables:
-            type: array
-            items: string
+tags:
+  - name: Général
+    description: Points de terminaison généraux pour récupérer les données de base
+  - name: Recherche & Développement
+    description: Points de terminaison d'analyse et de reporting R&D
+  - name: Finance & Gestion
+    description: Points de terminaison de reporting financier et de gestion
+  - name: Assistance Commerciale
+    description: Points de terminaison de support commercial et d'analyse
 
-      - name: "Personnel"
-        method: GET
-        path: "/general/personnel"
-        description: "Retourne tous les membres du personnel"
-        output:
-          - id: string
-          - nom_prenom: string
-          - etat: string
-          - service: string
-          - frequence_cardiaque: int
-          - position: string
+paths:
+  # === GÉNÉRAL ===
+  /general/tables:
+    get:
+      tags: [Général]
+      summary: Liste des tables de la BD
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                { tables: ["personnel", "articles", "operations_commerciale"] }
 
-      - name: "Articles"
-        method: GET
-        path: "/general/articles"
-        description: "Retourne tous les articles"
-        output:
-          - id: int
-          - zone: int
-          - etat_emballage: string
-          - responsable_id: string
-          - position: string
-          - rotation: string
-          - collisions: int
+  /general/personnel:
+    get:
+      tags: [Général]
+      summary: Tous les membres du personnel
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Personnel"
 
-      - name: "Operations"
-        method: GET
-        path: "/general/operations"
-        description: "Retourne toutes les opérations commerciales"
-        output:
-          - id: int
-          - type_op: string
-          - responsable_id: string
-          - marge: float
-          - km_parcourus: float
-          - mot_cle_responsable: string
-          - mot_cle_client: string
+  /general/articles:
+    get:
+      tags: [Général]
+      summary: Tous les articles
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Article"
 
-      - name: "Formations"
-        method: GET
-        path: "/general/formations"
-        description: "Retourne toutes les formations"
-        output:
-          - id: int
-          - nom_formation: string
-          - sujet: string
-          - date_formation: string (ISO)
-          - pourcentage_engagement: float
-          - pourcentage_satisfaction: float
-          - mot_cle_formateur: string
-          - mot_cle_personnel: string
+  /general/operations:
+    get:
+      tags: [Général]
+      summary: Toutes les opérations commerciales
+      responses:
+        "200":
+          description: OK
 
-      - name: "Surveillance"
-        method: GET
-        path: "/general/surveillance"
-        description: "Retourne toutes les zones de surveillance"
-        output:
-          - zone: int
-          - drones_actifs: int
-          - drones_panne: int
-          - drones_rechargement: int
-          - detection_incendie: boolean
-          - detection_forme: string
-          - audit_conformite: boolean
+  /general/formations:
+    get:
+      tags: [Général]
+      summary: Toutes les formations
+      responses:
+        "200":
+          description: OK
 
-  - name: "Finance & Contrôle de Gestion"
-    description: "Endpoints liés aux opérations financières et gestion des drones"
-    endpoints:
-      - name: "Responsable ayant parcouru le plus de km"
-        method: GET
-        path: "/finance_gestion/responsable/max_km"
-        description: "Retourne le membre du personnel ayant parcouru le plus de km"
-        output:
-          responsable: string
-          identifiant: string
-          total_km_parcourus: float
+  /general/surveillance:
+    get:
+      tags: [Général]
+      summary: Données de surveillance par zone
+      responses:
+        "200":
+          description: OK
 
-      - name: "Drone le plus ancien (simulé)"
-        method: GET
-        path: "/finance_gestion/drone/plus_ancien"
-        description: "Retourne la zone avec le drone le plus ancien, déduit de drones en panne et rechargement"
-        output:
-          zone: int
-          drone_age: int
-          drones_panne: int
-          drones_rechargement: int
+  /general/stats/personnel/count:
+    get:
+      tags: [Général]
+      summary: Nombre total de personnel
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example: { nb_personnel: 45 }
 
-      - name: "Marge totale par responsable"
-        method: GET
-        path: "/finance_gestion/marges_par_responsable"
-        description: "Retourne la marge totale par responsable (pour graphiques)"
-        output:
-          - responsable: string
-          - total_marge: float
+  /general/stats/articles/deformes:
+    get:
+      tags: [Général]
+      summary: Nombre d'articles déformés
+      responses:
+        "200":
+          description: OK
 
-      - name: "Nombre d'opérations par type"
-        method: GET
-        path: "/finance_gestion/operations_par_type"
-        description: "Retourne le nombre d'opérations par type (Achat/Vente) pour graphiques"
-        output:
-          - type_op: string
-          - count: int
+  /general/stats/operations/total_km:
+    get:
+      tags: [Général]
+      summary: Total km parcourus
+      responses:
+        "200":
+          description: OK
 
-  - name: "Assistance Commerciale"
-    description: "Endpoints liés aux zones et aux responsables commerciaux"
-    endpoints:
-      - name: "Zone avec CO2 le plus faible"
-        method: GET
-        path: "/assistance_commerciale/zone/co2_min"
-        description: "Retourne la zone avec le niveau de CO2 déduit le plus faible"
-        output:
-          zone: int
-          deduced_co2_level: float
-          drones_actifs: int
-          drones_panne: int
-          drones_rechargement: int
-          detection_incendie: boolean
-          audit_conformite: boolean
+  /general/stats/personnel/etat:
+    get:
+      tags: [Général]
+      summary: Répartition du personnel par état
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example: { actif: 30, repos: 10, absent: 5 }
 
-      - name: "Nombre de responsables en vente"
-        method: GET
-        path: "/assistance_commerciale/responsables_vente"
-        description: "Retourne le nombre de membres du personnel ayant réalisé au moins une vente"
-        output:
-          nombre_responsables_vente: int
+  /general/stats/articles/per_zone:
+    get:
+      tags: [Général]
+      summary: Nombre d'articles par zone
+      responses:
+        "200":
+          description: OK
 
-      - name: "Zone avec le plus de drones disponibles"
-        method: GET
-        path: "/assistance_commerciale/zone/max_drones"
-        description: "Retourne la zone avec le plus grand nombre de drones actifs + rechargement"
-        output:
-          zone: int
-          total_operational_drones: int
-          drones_actifs: int
-          drones_rechargement: int
+  # === RECHERCHE & DÉVELOPPEMENT ===
+  /recherche_developpement/articles/deformes_sans_collision:
+    get:
+      tags: [Recherche & Développement]
+      summary: Articles déformés sans collision (agrégé toutes sources)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                articles_deformes_sans_collision: 23
+                sources_responded: ["local (DB)", "France", "Allemagne"]
+                num_sources_responded: 3
 
-      - name: "Zone à risque maximal"
-        method: GET
-        path: "/assistance_commerciale/zone/risk_score"
-        description: "Retourne la zone présentant le risque opérationnel le plus élevé"
-        output:
-          zone: int
-          risk_score: int
-          drones_panne: int
-          detection_incendie: boolean
-          audit_conformite: boolean
+  /recherche_developpement/articles/deformes_sans_collision_per_source:
+    get:
+      tags: [Recherche & Développement]
+      summary: Articles déformés sans collision (par source)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                articles_deformes_sans_collision:
+                  - { source: "local (DB)", count: 10 }
+                  - { source: "France", count: 8 }
 
-      - name: "CO2 pour toutes les zones (graph)"
-        method: GET
-        path: "/assistance_commerciale/zones/co2_all"
-        description: "Retourne toutes les zones avec leur niveau de CO2 déduit pour graphiques"
-        output:
-          - zone: int
-          - deduced_co2_level: float
+  /recherche_developpement/machine/faible_cadence:
+    get:
+      tags: [Recherche & Développement]
+      summary: Machine avec la plus faible cadence (par source)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                machines_faible_cadence:
+                  - { source: "France", zone_machine: "Zone_C", cadence: 3.5 }
 
-      - name: "Distribution des drones par zone (graph)"
-        method: GET
-        path: "/assistance_commerciale/zones/drones_distribution"
-        description: "Retourne la répartition des drones par zone pour graphiques"
-        output:
-          - zone: int
-          - total_drones: int
-          - drones_actifs: int
-          - drones_rechargement: int
+  /recherche_developpement/articles/repartition_emballage:
+    get:
+      tags: [Recherche & Développement]
+      summary: Répartition des articles par état d'emballage
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                - { etat_emballage: "intact", count: 150 }
+                - { etat_emballage: "deformé", count: 30 }
 
-  - name: "Recherche & Développement"
-    description: "Endpoints liés aux articles et machines"
-    endpoints:
-      - name: "Articles déformés sans collision"
-        method: GET
-        path: "/recherche_developpement/articles/deformes_sans_collision"
-        description: "Retourne le nombre d'articles avec emballage déformé sans collisions"
-        output:
-          articles_deformes_sans_collision: int
+  # === FINANCE & GESTION ===
+  /finance_gestion/responsable/max_km:
+    get:
+      tags: [Finance & Gestion]
+      summary: Responsable avec le plus de km (agrégé)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                responsable: "Jean Dupont"
+                identifiant: "P001"
+                total_km_parcourus: 1250.75
+                source_max: "local (Brésil)"
+                sources_responded: ["local (Brésil)", "France"]
+                num_sources_responded: 2
+        "404":
+          description: Aucune donnée disponible
 
-      - name: "Machine avec la plus faible cadence"
-        method: GET
-        path: "/recherche_developpement/machine/faible_cadence"
-        description: "Retourne la zone/machine avec la plus faible cadence, calcul déduit"
-        output:
-          zone_machine: int
-          cadence: int
+  /finance_gestion/responsable/max_km_per_source:
+    get:
+      tags: [Finance & Gestion]
+      summary: Responsable avec le plus de km (par source)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                - {
+                    source: "local (Brésil)",
+                    responsable_id: "P001",
+                    responsable_name: "Jean Dupont",
+                    max_km: 800.50,
+                  }
 
-      - name: "Répartition articles par état d'emballage (graph)"
-        method: GET
-        path: "/recherche_developpement/articles/repartition_emballage"
-        description: "Retourne la répartition des articles par état d'emballage"
-        output:
-          - etat_emballage: string
-          - count: int
+  /finance_gestion/drone/plus_ancien:
+    get:
+      tags: [Finance & Gestion]
+      summary: Zone avec le drone le plus ancien
+      description: "Calcul: drone_age = (drones_panne * 2) + drones_rechargement"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                zone: "Zone_B"
+                drone_age: 15
+                drones_panne: 5
+                drones_rechargement: 5
+                source_max: "local (Brésil)"
 
-      - name: "Collisions par zone (graph)"
-        method: GET
-        path: "/recherche_developpement/articles/collisions_par_zone"
-        description: "Retourne le nombre total de collisions par zone"
-        output:
-          - zone: int
-          - collisions_totales: int
+  /finance_gestion/marges_par_responsable:
+    get:
+      tags: [Finance & Gestion]
+      summary: Marges totales par responsable et source
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                - {
+                    source: "local (Brésil)",
+                    responsable_id: "P001",
+                    responsable_name: "Jean Dupont",
+                    total_marge: 15000.50,
+                  }
+
+  /finance_gestion/operations_par_type:
+    get:
+      tags: [Finance & Gestion]
+      summary: Nombre d'opérations par type (achat/vente)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                - { type_op: "achat", source: "local (Brésil)", count: 45 }
+                - { type_op: "vente", source: "local (Brésil)", count: 38 }
+
+  # === ASSISTANCE COMMERCIALE ===
+  /assistance_commerciale/zone/co2_min:
+    get:
+      tags: [Assistance Commerciale]
+      summary: Zone avec le niveau de CO2 minimum (agrégé)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                zone: "Zone_A"
+                co2_level: 350.25
+                source: "France"
+                sources_responded: ["France", "Allemagne"]
+                num_sources_responded: 2
+
+  /assistance_commerciale/zone/co2_min_per_source:
+    get:
+      tags: [Assistance Commerciale]
+      summary: Zone avec CO2 minimum (par source)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                - { source: "France", zone: "Zone_A", co2_level: 350.25 }
+                - { source: "Allemagne", zone: "Zone_C", co2_level: 365.80 }
+
+  /assistance_commerciale/responsables_vente:
+    get:
+      tags: [Assistance Commerciale]
+      summary: Nombre de responsables ayant fait des ventes (agrégé)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                nombre_responsables_vente: 12
+                sources_responded: ["local (Brésil)", "France"]
+                num_sources_responded: 2
+
+  /assistance_commerciale/responsables_vente_per_source:
+    get:
+      tags: [Assistance Commerciale]
+      summary: Nombre de responsables en vente (par source)
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              example:
+                - { source: "local (Brésil)", nombre_responsables_vente: 5 }
+                - { source: "France", nombre_responsables_vente: 4 }
+
+# ===========================
+# COMPOSANTS/SCHÉMAS
+# ===========================
+components:
+  schemas:
+    Personnel:
+      type: object
+      description: Représente un membre du personnel
+      properties:
+        id:
+          type: string
+          description: Identifiant unique du personnel
+        nom_prenom:
+          type: string
+          description: Nom complet
+        etat:
+          type: string
+          enum: [actif, repos, absent]
+          description: État du personnel
+        service:
+          type: string
+          description: Département/service
+        frequence_cardiaque:
+          type: integer
+          description: Fréquence cardiaque
+        position:
+          type: string
+          description: Position/localisation actuelle
+      example:
+        id: "P001"
+        nom_prenom: "Jean Dupont"
+        etat: "actif"
+        service: "logistique"
+        frequence_cardiaque: 75
+        position: "Zone_A"
+
+    Article:
+      type: object
+      description: Représente un article dans l'entrepôt
+      properties:
+        id:
+          type: string
+          description: Identifiant unique de l'article
+        zone:
+          type: string
+          description: Zone où l'article est localisé
+        etat_emballage:
+          type: string
+          enum: [intact, defo, abimé]
+          description: État de l'emballage
+        responsable_id:
+          type: string
+          description: ID du responsable
+        position:
+          type: string
+          description: Position de l'article
+        rotation:
+          type: number
+          format: float
+          description: Rotation de l'article
+        collisions:
+          type: integer
+          description: Nombre de collisions
+      example:
+        id: "A001"
+        zone: "Zone_B"
+        etat_emballage: "intact"
+        responsable_id: "P001"
+        position: "x:10,y:20"
+        rotation: 45.5
+        collisions: 0
+
+    Operation:
+      type: object
+      description: Représente une opération commerciale
+      properties:
+        id:
+          type: string
+          description: Identifiant unique de l'opération
+        type_op:
+          type: string
+          enum: [achat, vente]
+          description: Type d'opération
+        responsable_id:
+          type: string
+          description: ID du responsable
+        marge:
+          type: number
+          format: float
+          description: Marge bénéficiaire
+        km_parcourus:
+          type: number
+          format: float
+          description: Kilomètres parcourus
+        mot_cle_responsable:
+          type: string
+          description: Mot-clé du responsable
+        mot_cle_client:
+          type: string
+          description: Mot-clé du client
+      example:
+        id: "OP001"
+        type_op: "vente"
+        responsable_id: "P001"
+        marge: 1500.50
+        km_parcourus: 45.3
+        mot_cle_responsable: "logistique"
+        mot_cle_client: "urgent"
+
+    Formation:
+      type: object
+      description: Représente une session de formation
+      properties:
+        id:
+          type: string
+          description: Identifiant unique de la formation
+        nom_formation:
+          type: string
+          description: Nom de la formation
+        sujet:
+          type: string
+          description: Sujet de la formation
+        date_formation:
+          type: string
+          format: date
+          description: Date de la formation
+        pourcentage_engagement:
+          type: number
+          format: float
+          description: Pourcentage d'engagement
+        pourcentage_satisfaction:
+          type: number
+          format: float
+          description: Pourcentage de satisfaction
+        mot_cle_formateur:
+          type: string
+          description: Mot-clé du formateur
+        mot_cle_personnel:
+          type: string
+          description: Mot-clé du personnel
+      example:
+        id: "F001"
+        nom_formation: "Sécurité en entrepôt"
+        sujet: "sécurité"
+        date_formation: "2024-01-15"
+        pourcentage_engagement: 85.5
+        pourcentage_satisfaction: 90.0
+        mot_cle_formateur: "expert"
+        mot_cle_personnel: "débutant"
+
+    Surveillance:
+      type: object
+      description: Représente les données de surveillance d'une zone
+      properties:
+        zone:
+          type: string
+          description: Identifiant de la zone
+        drones_actifs:
+          type: integer
+          description: Nombre de drones actifs
+        drones_panne:
+          type: integer
+          description: Nombre de drones en panne
+        drones_rechargement:
+          type: integer
+          description: Nombre de drones en rechargement
+        detection_incendie:
+          type: boolean
+          description: Détection d'incendie
+        detection_forme:
+          type: string
+          description: Forme détectée
+        audit_conformite:
+          type: boolean
+          description: Audit de conformité
+      example:
+        zone: "Zone_A"
+        drones_actifs: 8
+        drones_panne: 2
+        drones_rechargement: 3
+        detection_incendie: false
+        detection_forme: "carré"
+        audit_conformite: true

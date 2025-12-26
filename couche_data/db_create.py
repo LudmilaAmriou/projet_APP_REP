@@ -1,5 +1,6 @@
 
-from .db_connect import create_app, db
+from couche_data.db_connect import create_app, db
+import couche_data.db_tables
 
 # -----------------------------
 # Create all tables
