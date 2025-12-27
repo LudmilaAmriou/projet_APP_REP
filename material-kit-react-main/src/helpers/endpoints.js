@@ -17,18 +17,19 @@ export const SERVICES = [
 export const API_ENDPOINTS = {
   "Finance & Contrôle de Gestion": {
     A: {
-      brazil: [`${BASE_URLS.brazil}/finance_gestion/responsable/max_km`],
-    //   external: ["https://externalapi.com/finance/max_km"] // other countries
+      brazil: [`${BASE_URLS.brazil}/finance_gestion/responsable/max_km`]
     },
     B: {
       brazil: [`${BASE_URLS.brazil}/finance_gestion/drone/plus_ancien`],
-      egypte : [`${BASE_URLS.egypte}/finance_gestion/drone/plus_ancien`]
     },
     C: {
       brazil: [`${BASE_URLS.brazil}/finance_gestion/marges_par_responsable`]
     },
     D: {
       brazil: [`${BASE_URLS.brazil}/finance_gestion/operations_par_type`]
+    },
+    E: {
+      brazil: [`${BASE_URLS.brazil}/finance_gestion/responsable/max_km_per_source`]
     }
   },
   "Juridique": {

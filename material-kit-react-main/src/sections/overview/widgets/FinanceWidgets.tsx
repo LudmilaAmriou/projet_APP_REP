@@ -3,7 +3,7 @@ import { JSX, useEffect, useState } from 'react';
 
 import { Box, Grid, CircularProgress } from '@mui/material';
 
-import { _posts, _tasks, _traffic, _timeline, CountryType } from 'src/_mock';
+import { _posts, CountryType } from 'src/_mock';
 
 import { AnalyticsNews } from '../analytics-news';
 import { AnalyticsTasks } from '../analytics-tasks';
@@ -14,13 +14,14 @@ import { AnalyticsOrderTimeline } from '../analytics-order-timeline';
 import { AnalyticsTrafficBySite } from '../analytics-traffic-by-site';
 import { AnalyticsCurrentSubject } from '../analytics-current-subject';
 import { AnalyticsConversionRates } from '../analytics-conversion-rates';
-import financeService, { MaxKmType, OldestDroneType, MargeType, OperationType } from '../../../services/FinanceService';
+import financeService, { MaxKmType, OldestDroneType, MargeType, OperationType, MaxKmTypeSource } from '../../../services/FinanceService';
 
 type DataState = {
   maxKm: MaxKmType | null;
   oldestDrone: OldestDroneType | null;
   marges: MargeType[] | null;
   operations: OperationType[] | null;
+  maxKmParSource: MaxKmTypeSource[] | null;
 };
 
 type Props = {
@@ -33,60 +34,42 @@ export default function FinanceWidgets({ country }: Props): JSX.Element {
     oldestDrone: null,
     marges: null,
     operations: null,
+    maxKmParSource: null,
   });
+
   const [loading, setLoading] = useState<boolean>(true);
 
+
   useEffect(() => {
-  async function loadData() {
-    try {
-      const [maxKm, oldestDrone, marges, operations] = await Promise.all([
-        financeService.getMaxKm(),
-        financeService.getOldestDrone(),
-        financeService.getMargeParResponsable(),
-        financeService.getOperationsParType(),
-      ]);
+    async function loadData() {
+      try {
+        const [maxKm, oldestDrone, marges, operations, maxKmParSource] = await Promise.all([
+          financeService.getMaxKm(),
+          financeService.getOldestDrone(),
+          financeService.getMargeParResponsable(),
+          financeService.getOperationsParType(),
+          financeService.getMaxKmParSource(),
+        ]);
 
-      if (maxKm) {
-        // If data for Brazil exists
-        setData({ maxKm, oldestDrone, marges, operations });
-      } else {
-        // Fallback static data for other countries
-        setData({
-          maxKm: { identifiant: '0', responsable: 'Responsable X', total_km_parcourus: 1000 },
-          oldestDrone: { drone_age: 5 },
-          marges: [
-            {  responsable: 'Responsable A', total_marge: 120 },
-            {  responsable: 'Responsable B', total_marge: 80 },
-          ],
-          operations: [
-            { type_op: 'Achat', count: 50 },
-            { type_op: 'Vente', count: 70 },
-          ],
-        });
+        // 🔥 PRINT RAW DATA EXACTLY AS RECEIVED
+        console.log("=== FINANCE WIDGET RAW DATA ===");
+        console.log("maxKm =>", maxKm);
+        console.log("oldestDrone =>", oldestDrone);
+        console.log("marges =>", marges);
+        console.log("operations =>", operations);
+        console.log("maxKmParSource =>", maxKmParSource);
+        console.log("================================");
+
+        setData({ maxKm, oldestDrone, marges, operations, maxKmParSource });
+      } catch (err) {
+        console.error("Error fetching finance data:", err);
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error('Error fetching finance data:', err);
-
-      // fallback if API fails
-      setData({
-        maxKm: { identifiant: '0', responsable: 'Responsable X', total_km_parcourus: 1000 },
-        oldestDrone: { drone_age: 5 },
-        marges: [
-          {  responsable: 'Responsable A', total_marge: 120 },
-          {responsable: 'Responsable B', total_marge: 80 },
-        ],
-        operations: [
-          { type_op: 'Achat', count: 50 },
-          {  type_op: 'Vente', count: 70 },
-        ],
-      });
-    } finally {
-      setLoading(false);
     }
-  }
 
-  loadData();
-}, []);
+    loadData();
+  }, []);
 
 
   return (
@@ -99,7 +82,7 @@ export default function FinanceWidgets({ country }: Props): JSX.Element {
             </Box>
             ) :  (
                 <AnalyticsWidgetSummary
-                  title={`Max km : ${data.maxKm?.responsable ?? ''}`} // nom de la personne
+               title={`Max Kms totaux parcourus par : ${data.maxKm?.responsable ?? ''}`}
                   total={(data.maxKm?.total_km_parcourus ?? 0)} // km formaté
                   color="secondary"
                   chart={{
@@ -132,7 +115,7 @@ export default function FinanceWidgets({ country }: Props): JSX.Element {
               total={data.marges?.reduce((sum, r) => sum + r.total_marge, 0) ?? 0}
               chart={{
                 series: data.marges?.map(r => r.total_marge) ?? [0],
-                categories: data.marges?.map(r => r.responsable) ?? [''],
+                categories: data.marges?.map(r => r.responsable_name) ?? [''],
               }}
               icon={<img src="/assets/icons/glass/ic-glass-buy.svg" alt="Marge" />}
             />
@@ -153,48 +136,81 @@ export default function FinanceWidgets({ country }: Props): JSX.Element {
               icon={<img src="/assets/icons/glass/ic-glass-message.svg" alt="Operations" />}
             />
           )}
-        </Grid>
+        </Grid>   
 
-        <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AnalyticsCurrentVisits
-            title="A revoir"
-           
+
+      
+    
+          <Grid size={{ xs: 12, md: 6, lg: 12 }}>
+         
+          <AnalyticsWebsiteVisits
+            title="Histogramme des opérations"
             chart={{
-              series: [
-                { label: 'America', value: 3500 },
-                { label: 'Asia', value: 2500 },
-                { label: 'Europe', value: 1500 },
-                { label: 'Africa', value: 500 },
-              ],
+              // X-axis: all unique operation types
+              categories: [...new Set(data.operations?.map(o => o.type_op) ?? [])],
+              
+              // Series: one per country
+              series: (() => {
+                const types = [...new Set(data.operations?.map(o => o.type_op) ?? [])];
+                const countries = [...new Set(data.operations?.map(o => o.source) ?? [])];
+
+                return countries.map(source => ({
+                  name: source, // use 'source' here
+                  data: types.map(type => {
+                    const op = data.operations?.find(
+                      o => o.source === source && o.type_op === type
+                    );
+                    return op ? op.count : 0;
+                  }),
+                }));
+
+              })(),
             }}
           />
         </Grid>
 
-        <Grid size={{ xs: 12, md: 6, lg: 8 }}>
-  <AnalyticsWebsiteVisits
-    title="Histogramme des opérations"
-    chart={{
-      categories: [
-        ...(data.operations?.map(o => o.type_op) ?? []), // types Brésil
-        'Achat (Egypte)',
-        'Vente (Egypte)',
-      ],
-      series: [
-        {
-          name: 'Nombre d’opérations',
-          data: [
-            ...(data.operations?.map(o => o.count) ?? []), // counts Brésil
-            50, // Achat Egypte
-            70, // Vente Egypte
-          ],
-        },
-      ],
-    }}
-  />
-</Grid>
+          <Grid size={{ xs: 12, md: 6, lg: 9 }}>
+          <AnalyticsCurrentVisits
+            title="Répartition du maximum de kms par responsable et par source"
+            chart={{
+              series: data.maxKmParSource?.map(d => ({ label: d.responsable_name, value: Number(d.max_km ?? 0) })) ?? [],
+            }}
+          />
+        </Grid>
+            
+        <Grid size={{ xs: 12, md: 6, lg: 3}}>
+          <AnalyticsTrafficBySite
+            title="Maximum de Km parcourus par Pays"
+            list={(data.maxKmParSource
+              ?.map((r) => ({
+                value: (r.responsable_name), // convert to string
+                label: r.source, // country label, matches _langs.label
+                total: Number(r.max_km ?? 0),
+              }))
+              .sort((a, b) => b.total - a.total)) ?? [] // provide default empty array
+            }
+          />
+        </Grid>
 
 
-        {/* <Grid size={{ xs: 12, md: 6, lg: 8 }}>
+          <Grid size={{ xs: 12, md: 6, lg: 12}}>
+          <AnalyticsNews
+            title="Marge par responsable"
+            list={data.marges?.map(r => ({
+              id: r.responsable_name,
+              title: r.responsable_name,
+              description: `Marge totale : ${r.total_marge}`,
+              coverUrl: '/assets/icons/glass/ic-glass-buy.svg',
+              source: r.source, 
+          })) ?? []}
+        />
+        </Grid>
+
+
+
+
+
+          {/* <Grid size={{ xs: 4, md: 1, lg: 8 }}>
           <AnalyticsConversionRates
             title="Conversion rates"
             subheader="(+43%) than last year"
@@ -207,6 +223,7 @@ export default function FinanceWidgets({ country }: Props): JSX.Element {
             }}
           />
         </Grid> */}
+
 
         {/* <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <AnalyticsCurrentSubject
@@ -221,34 +238,20 @@ export default function FinanceWidgets({ country }: Props): JSX.Element {
             }}
           />
         </Grid> */}
+        
+ 
 
-        <Grid size={{ xs: 12, md: 6, lg: 20}}>
-          <AnalyticsNews
-  title="Marge par responsable"
-  list={data.marges?.map(r => ({
-    id: r.responsable,
-    title: r.responsable,
-    description: `Marge totale : ${r.total_marge}`,
-    coverUrl: '/assets/icons/glass/ic-glass-buy.svg',
-    postedAt: Date.now(), // ou une date réelle si tu en as
-  })) ?? []}
-/>
-
-
-
-        </Grid>
+      
 
         {/* <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           <AnalyticsOrderTimeline title="Order timeline" list={_timeline} />
         </Grid> */}
+        
 
-        {/* <Grid size={{ xs: 12, md: 6, lg: 4 }}>
-          <AnalyticsTrafficBySite title="Traffic by site" list={_traffic} />
-        </Grid> */}
 
-        <Grid size={{ xs: 12, md: 6, lg: 20}}>
+        {/* <Grid size={{ xs: 12, md: 6, lg: 20}}>
           <AnalyticsTasks title="Tasks" list={_tasks} />
-        </Grid>
+        </Grid> */}
       </Grid>
   );
 }

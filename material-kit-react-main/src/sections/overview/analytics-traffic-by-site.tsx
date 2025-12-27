@@ -9,6 +9,8 @@ import Typography from '@mui/material/Typography';
 
 import { fShortenNumber } from 'src/utils/format-number';
 
+import { _langs } from 'src/_mock';
+
 import { Iconify } from 'src/components/iconify';
 
 // ----------------------------------------------------------------------
@@ -31,34 +33,42 @@ export function AnalyticsTrafficBySite({ title, subheader, list, sx, ...other }:
           gridTemplateColumns: 'repeat(2, 1fr)',
         }}
       >
-        {list.map((site) => (
-          <Box
-            key={site.label}
-            sx={(theme) => ({
-              py: 2.5,
-              display: 'flex',
-              borderRadius: 1.5,
-              textAlign: 'center',
-              alignItems: 'center',
-              flexDirection: 'column',
-              border: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.12)}`,
-            })}
-          >
-            {site.value === 'twitter' && <Iconify width={32} icon="socials:twitter" />}
-            {site.value === 'facebook' && <Iconify width={32} icon="socials:facebook" />}
-            {site.value === 'google' && <Iconify width={32} icon="socials:google" />}
-            {site.value === 'linkedin' && <Iconify width={32} icon="socials:linkedin" />}
+        {list.map((site) => {
+          const lang = _langs.find((l) => l.label === site.label);
 
-            <Typography variant="h6" sx={{ mt: 1 }}>
-              {fShortenNumber(site.total)}
-            </Typography>
+          return (
+            <Box
+              key={site.label}
+              sx={(theme) => ({
+                py: 2.5,
+                display: 'flex',
+                borderRadius: 1.5,
+                textAlign: 'center',
+                alignItems: 'center',
+                flexDirection: 'column',
+                border: `solid 1px ${varAlpha(theme.vars.palette.grey['500Channel'], 0.12)}`,
+              })}
+            >
+              {lang && (
+                <img
+                  src={lang.icon}
+                  alt={lang.label}
+                  style={{ width: 32, height: 32, objectFit: 'cover' }}
+                />
+              )}
 
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {site.label}
-            </Typography>
-          </Box>
-        ))}
+              <Typography variant="h6" sx={{ mt: 1 }}>
+                {fShortenNumber(site.total)}
+              </Typography>
+
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {site.label}
+              </Typography>
+            </Box>
+          );
+        })}
       </Box>
     </Card>
   );
 }
+

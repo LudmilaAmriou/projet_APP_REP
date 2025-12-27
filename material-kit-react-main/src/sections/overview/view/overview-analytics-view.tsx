@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 import Typography from '@mui/material/Typography';
 
+import { _posts } from 'src/_mock';
 import { DashboardContent } from 'src/layouts/dashboard';
-import { _posts, _tasks, _traffic, _timeline } from 'src/_mock';
 
 import ServiceDashboard from './serviceDashboard';
 import CountrySelector from '../country-selector';
@@ -25,7 +25,7 @@ export function OverviewAnalyticsView() {
       <ServiceSelector service={service} setService={setService} />
 
       {/* Dropdown to switch country */}
-      <CountrySelector value={country} onChange={setCountry} />
+      {/* <CountrySelector value={country} onChange={setCountry} /> */}
 
       {/* Render the correct dashboard */}
       <ServiceDashboard service={service} country={country} />

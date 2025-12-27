@@ -102,7 +102,7 @@ export const _products = [...Array(24)].map((_, index) => {
 export type CountryType = 'br' | 'us' | 'eg' | 'vt' | 'au' | 'ca' | 'fr' | 'ch' | 'al' ;
 
 export const _langs: { value: CountryType; label: string; icon: string }[] = [
-  { value: 'br', label: 'Brésil', icon: '/assets/icons/flags/ic-flag-br.svg' },
+  { value: 'br', label: 'local (Brésil)', icon: '/assets/icons/flags/ic-flag-br.svg' },
   { value: 'us', label: 'Etats-Unis', icon: '/assets/icons/flags/ic-flag-us.svg' },
   { value: 'eg', label: 'Egypte', icon: '/assets/icons/flags/ic-flag-eg.svg' },
   { value: 'vt', label: 'Vietnam', icon: '/assets/icons/flags/ic-flag-vt.svg' },
@@ -117,46 +117,8 @@ export const _langs: { value: CountryType; label: string; icon: string }[] = [
 
 // ----------------------------------------------------------------------
 
-export const _timeline = [...Array(5)].map((_, index) => ({
-  id: _id(index),
-  title: [
-    '1983, orders, $4220',
-    '12 Invoices have been paid',
-    'Order #37745 from September',
-    'New order placed #XF-2356',
-    'New order placed #XF-2346',
-  ][index],
-  type: `order${index + 1}`,
-  time: _times(index),
-}));
 
-export const _traffic = [
-  {
-    value: 'facebook',
-    label: 'Facebook',
-    total: 19500,
-  },
-  {
-    value: 'google',
-    label: 'Google',
-    total: 91200,
-  },
-  {
-    value: 'linkedin',
-    label: 'Linkedin',
-    total: 69800,
-  },
-  {
-    value: 'twitter',
-    label: 'Twitter',
-    total: 84900,
-  },
-];
 
-export const _tasks = Array.from({ length: 5 }, (_, index) => ({
-  id: _id(index),
-  name: _taskNames(index),
-}));
 
 // ----------------------------------------------------------------------
 

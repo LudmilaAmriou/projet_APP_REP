@@ -13,6 +13,8 @@ import ListItemText from '@mui/material/ListItemText';
 
 import { fToNow } from 'src/utils/format-time';
 
+import { _langs } from 'src/_mock/_data';
+
 import { Iconify } from 'src/components/iconify';
 import { Scrollbar } from 'src/components/scrollbar';
 
@@ -26,6 +28,7 @@ type Props = CardProps & {
     title: string;
     coverUrl: string;
     description: string;
+    source?: string;
     // postedAt: string | number | null;
   }[];
   initialLimit?: number; // nombre d'items affichés avant "View all"
@@ -33,6 +36,7 @@ type Props = CardProps & {
 
 export function AnalyticsNews({ title, subheader, list, initialLimit = 5, sx, ...other }: Props) {
   const [showAll, setShowAll] = useState(false);
+  
 
   // limiter la liste si showAll = false
   const displayedList = showAll ? list : list.slice(0, initialLimit);
@@ -72,6 +76,7 @@ type ItemProps = BoxProps & {
 };
 
 function Item({ item, sx, ...other }: ItemProps) {
+  const lang = item.source ? _langs.find(l => l.label === item.source) : null;
   return (
     <Box
       sx={[
@@ -105,6 +110,15 @@ function Item({ item, sx, ...other }: ItemProps) {
           },
         }}
       />
+       {/* Flag icon on the right */}
+      {lang && (
+        <Avatar
+        
+          src={lang.icon}
+          alt={lang.label}
+          sx={{ width: 40, height: 40, flexShrink: 0, ml: 2 }}
+        />
+      )}
 
       <Box sx={{ flexShrink: 0, typography: 'caption', color: 'text.disabled' }}>
         {/* {fToNow(item.postedAt)} */}

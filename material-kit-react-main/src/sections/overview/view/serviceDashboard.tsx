@@ -16,7 +16,7 @@ import type { ServiceType } from '../service-selector';
 
 type Props = {
   service: ServiceType;
-  country: CountryType; // <- add country
+  country: CountryType; 
 };
 
 export default function ServiceDashboard({ service, country }: Props) {
