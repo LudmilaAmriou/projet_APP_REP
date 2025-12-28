@@ -15,6 +15,15 @@ export const SERVICES = [
 
 // Structure: SERVICE → METRIC → COUNTRY → ENDPOINTS
 export const API_ENDPOINTS = {
+  
+  
+  "General": {
+  Personnel: { brazil: [`${BASE_URLS.brazil}/general/personnel`] },
+  Articles: { brazil: [`${BASE_URLS.brazil}/general/articles`] },
+  Operations: { brazil: [`${BASE_URLS.brazil}/general/operations`] },
+  Formations: { brazil: [`${BASE_URLS.brazil}/general/formations`] },
+  Surveillance: { brazil: [`${BASE_URLS.brazil}/general/surveillance`] },
+},
   "Finance & Contrôle de Gestion": {
     A: {
       brazil: [`${BASE_URLS.brazil}/finance_gestion/responsable/max_km`]

@@ -1,16 +1,10 @@
+import type { ServiceType } from 'src/_mock/_data';
+
 // ServiceSelector.tsx
 import React from 'react';
 
 import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
 
-export type ServiceType =
-  | 'Finance'
-  | 'Juridique'
-  | 'Direction générale'
-  | 'Achats'
-  | 'Informatique'
-  | 'Collecte'
-  | 'Assistance technique';
 
 type Props = {
   service: ServiceType;

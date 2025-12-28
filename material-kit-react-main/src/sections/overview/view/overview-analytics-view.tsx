@@ -1,4 +1,4 @@
-import type { CountryType } from 'src/_mock/_data';
+import type { CountryType , ServiceType } from 'src/_mock/_data';
 
 import { useState } from 'react';
 
@@ -9,7 +9,7 @@ import { DashboardContent } from 'src/layouts/dashboard';
 
 import ServiceDashboard from './serviceDashboard';
 import CountrySelector from '../country-selector';
-import ServiceSelector, { ServiceType } from '../service-selector';
+import ServiceSelector from '../service-selector';
 
 export function OverviewAnalyticsView() {
   const [service, setService] = useState<ServiceType>('Finance');

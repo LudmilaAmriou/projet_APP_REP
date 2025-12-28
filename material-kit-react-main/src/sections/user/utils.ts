@@ -1,5 +1,6 @@
-import type { UserProps } from './user-table-row';
+import type { DynamicTableRowProps  } from './dynamictable-row';
 
+// ----------------------------------------------------------------------
 // ----------------------------------------------------------------------
 
 export const visuallyHidden = {
@@ -53,27 +54,39 @@ export function getComparator<Key extends keyof any>(
 // ----------------------------------------------------------------------
 
 type ApplyFilterProps = {
-  inputData: UserProps[];
+  inputData: Record<string, any>[];
   filterName: string;
   comparator: (a: any, b: any) => number;
+  searchFields?: string[]; // Fields to search in
 };
 
-export function applyFilter({ inputData, comparator, filterName }: ApplyFilterProps) {
+export function applyFilter({ 
+  inputData, 
+  comparator, 
+  filterName,
+  searchFields = ['name', 'nom_prenom'] // Default search fields
+}: ApplyFilterProps) {
   const stabilizedThis = inputData.map((el, index) => [el, index] as const);
-
+  
   stabilizedThis.sort((a, b) => {
     const order = comparator(a[0], b[0]);
     if (order !== 0) return order;
     return a[1] - b[1];
   });
-
+  
   inputData = stabilizedThis.map((el) => el[0]);
-
+  
   if (filterName) {
-    inputData = inputData.filter(
-      (user) => user.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
+    const lowerFilter = filterName.toLowerCase();
+    inputData = inputData.filter((row) => 
+      // Search across all specified fields
+       searchFields.some((field) => {
+        const value = row[field];
+        if (value == null) return false;
+        return String(value).toLowerCase().indexOf(lowerFilter) !== -1;
+      })
     );
   }
-
+  
   return inputData;
 }

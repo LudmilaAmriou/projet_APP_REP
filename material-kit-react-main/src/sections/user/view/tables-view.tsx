@@ -1,4 +1,4 @@
-import type { CountryType,  ServiceType } from 'src/_mock/_data';
+import type {  TableType } from 'src/_mock/_data';
 // import JuridiqueWidgets from './widgets/JuridiqueWidgets';
 // import DirectionWidgets from './widgets/DirectionWidgets';
 // import AchatsWidgets from './widgets/AchatsWidgets';
@@ -7,31 +7,26 @@ import type { CountryType,  ServiceType } from 'src/_mock/_data';
 // import AssistanceWidgets from './widgets/AssistanceWidgets';
 // import { ServiceType } from './ServiceSelector';
 
-// ServiceDashboard.tsx
+// TABLESVIEW.tsx
 import React from 'react';
 
-import FinanceWidgets from '../widgets/FinanceWidgets';
+import { PersonnelView } from '../widgets/personnel-widget';
 
 type Props = {
-  service: ServiceType;
-  country: CountryType; 
+  tableType: TableType;
 };
 
-export default function ServiceDashboard({ service, country }: Props) {
-  switch (service) {
-    case 'Finance':
-      return <FinanceWidgets country={country} />; // pass country to widgets
-    case 'Juridique':
+export default function TablesView({ tableType }: Props) {
+  switch (tableType) {
+    case 'Personnel':
+      return <PersonnelView />; 
+    case 'Articles':
       return null;
-    case 'Direction générale':
+    case 'Operations':
       return null;
-    case 'Achats':
+    case 'Surveillance':
       return null;
-    case 'Informatique':
-      return null;
-    case 'Collecte':
-      return null;
-    case 'Assistance technique':
+    case 'Formations':
       return null;
     default:
       return null;
