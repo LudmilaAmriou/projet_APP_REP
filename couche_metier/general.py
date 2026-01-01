@@ -6,26 +6,23 @@ from couche_data.db_tables import (
     EtatPersonnel, ServicePersonnel, TypeOperation,
     EtatEmballage, DetectionForme
 )
-
 from sqlalchemy import func, inspect
 
 general_bp = Blueprint('general', __name__, url_prefix='/general')
 
 
-
-
+# -----------------------------
+# List tables
+# -----------------------------
 @general_bp.route('/tables', methods=['GET'])
 def list_tables():
-    """
-    Returns a list of all tables in the database.
-    """
     inspector = inspect(db.engine)
     tables = inspector.get_table_names()
     return jsonify({'tables': tables})
 
 
 # -----------------------------
-# Table endpoints
+# Personnel
 # -----------------------------
 @general_bp.route('/personnel')
 def get_personnel():
@@ -39,35 +36,56 @@ def get_personnel():
         'position': p.position
     } for p in personnels])
 
+
+# -----------------------------
+# Articles with responsible name
+# -----------------------------
 @general_bp.route('/articles')
 def get_articles():
     articles = Article.query.all()
+    # build personnel id -> name map
+    personnels_map = {p.id: p.nom_prenom for p in Personnel.query.all()}
+
     return jsonify([{
         'id': a.id,
         'zone': a.zone,
         'etat_emballage': a.etat_emballage.value if a.etat_emballage else None,
         'responsable_id': a.responsable_id,
+        'responsable_name': personnels_map.get(a.responsable_id, 'Unknown'),
         'position': a.position,
         'rotation': a.rotation,
         'collisions': a.collisions
     } for a in articles])
 
+
+# -----------------------------
+# Operations with responsible name
+# -----------------------------
 @general_bp.route('/operations')
 def get_operations():
     ops = OperationCommerciale.query.all()
+    personnels_map = {p.id: p.nom_prenom for p in Personnel.query.all()}
+
     return jsonify([{
         'id': o.id,
         'type_op': o.type_op.value,
         'responsable_id': o.responsable_id,
+        'responsable_name': personnels_map.get(o.responsable_id, 'Unknown'),
         'marge': o.marge,
         'km_parcourus': o.km_parcourus,
         'mot_cle_responsable': o.mot_cle_responsable,
         'mot_cle_client': o.mot_cle_client
     } for o in ops])
 
+
+# -----------------------------
+# Formations with personnel name
+# -----------------------------
 @general_bp.route('/formations')
 def get_formations():
     formations = Formation.query.all()
+    personnels_map = {p.id: p.nom_prenom for p in Personnel.query.all()}
+
     return jsonify([{
         'id': f.id,
         'nom_formation': f.nom_formation,
@@ -76,9 +94,14 @@ def get_formations():
         'pourcentage_engagement': f.pourcentage_engagement,
         'pourcentage_satisfaction': f.pourcentage_satisfaction,
         'mot_cle_formateur': f.mot_cle_formateur,
-        'mot_cle_personnel': f.mot_cle_personnel
+        'mot_cle_personnel': f.mot_cle_personnel,
+        'personnel_name': personnels_map.get(f.mot_cle_personnel, 'Unknown')
     } for f in formations])
 
+
+# -----------------------------
+# Surveillance 
+# -----------------------------
 @general_bp.route('/surveillance')
 def get_surveillance():
     surveils = Surveillance.query.all()
@@ -92,8 +115,9 @@ def get_surveillance():
         'audit_conformite': s.audit_conformite
     } for s in surveils])
 
+
 # -----------------------------
-# Example stats queries
+# Stats
 # -----------------------------
 @general_bp.route('/stats/personnel/count')
 def personnel_count():

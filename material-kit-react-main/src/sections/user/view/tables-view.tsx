@@ -10,6 +10,7 @@ import type {  TableType } from 'src/_mock/_data';
 // TABLESVIEW.tsx
 import React from 'react';
 
+import { ArticlesView } from '../widgets/articles-widget';
 import { PersonnelView } from '../widgets/personnel-widget';
 
 type Props = {
@@ -21,7 +22,7 @@ export default function TablesView({ tableType }: Props) {
     case 'Personnel':
       return <PersonnelView />; 
     case 'Articles':
-      return null;
+      return <ArticlesView />;
     case 'Operations':
       return null;
     case 'Surveillance':

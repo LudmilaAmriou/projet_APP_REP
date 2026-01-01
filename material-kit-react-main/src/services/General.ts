@@ -22,7 +22,7 @@ export type Surveillance = {
 };
 
 export type Articles = {
-  id: number;
+  id: string;
   zone: number;
   etat_emballage: string;
   responsable_id: string;
