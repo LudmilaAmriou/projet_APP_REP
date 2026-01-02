@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from couche_data.db_connect import create_app, db
 from couche_data.db_tables import ServicePersonnel, EtatPersonnel, Personnel, OperationCommerciale, TypeOperation, Article, EtatEmballage, Surveillance, Formation, DetectionForme
 
-fake = Faker('fr_FR')
+fake = Faker('pt_BR')
 
 NB_PERSONNEL = 50
 NB_OPERATIONS = 150
