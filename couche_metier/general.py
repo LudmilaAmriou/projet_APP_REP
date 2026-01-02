@@ -79,7 +79,7 @@ def get_operations():
 
 
 # -----------------------------
-# Formations with personnel name
+# Formations
 # -----------------------------
 @general_bp.route('/formations')
 def get_formations():
@@ -94,8 +94,7 @@ def get_formations():
         'pourcentage_engagement': f.pourcentage_engagement,
         'pourcentage_satisfaction': f.pourcentage_satisfaction,
         'mot_cle_formateur': f.mot_cle_formateur,
-        'mot_cle_personnel': f.mot_cle_personnel,
-        'personnel_name': personnels_map.get(f.mot_cle_personnel, 'Unknown')
+        'mot_cle_personnel': f.mot_cle_personnel
     } for f in formations])
 
 
