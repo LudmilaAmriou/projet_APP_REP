@@ -11,7 +11,7 @@ import IconButton from '@mui/material/IconButton';
 import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 
 import { API_KEY } from 'src/helpers/config';
-import { API_URL, handleDeleteGeneral, handleEditGeneral } from 'src/helpers/post_functions';
+import { API_URL, handleEditGeneral, handleDeleteGeneral } from 'src/helpers/post_functions';
 
 import { Label } from 'src/components/label';
 import { Iconify } from 'src/components/iconify';
