@@ -1,7 +1,7 @@
 // FinanceService.ts
 import { empAchat } from 'src/_mytypes/_data';
 
-import { fetchData } from '../helpers/endpoints';
+import { fetchData } from '../helpers/get_functions';
 
 
 const achatsService = {

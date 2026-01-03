@@ -1,7 +1,7 @@
 // dgService.ts
 import type { DGPersonnel } from 'src/_mytypes/_data';
 
-import { fetchData } from '../helpers/endpoints';
+import { fetchData } from '../helpers/get_functions';
 
 
 const dgService = {

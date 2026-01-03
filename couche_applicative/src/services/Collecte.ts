@@ -3,7 +3,7 @@ import type { ZoneAudit } from 'src/_mytypes/_data';
 
 import { CollecteAdapters } from 'src/_mytypes/_data';
 
-import { fetchCountries } from '../helpers/endpoints';
+import { fetchCountries } from '../helpers/get_functions';
 
 const SOURCES = ['canada', 'france'];
 

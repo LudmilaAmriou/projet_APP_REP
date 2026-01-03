@@ -3,7 +3,7 @@ import type { NbSiteNonInfo } from 'src/_mytypes/_data';
 
 import { InformatiqueAdapters } from 'src/_mytypes/_data';
 
-import { fetchCountries } from '../helpers/endpoints';
+import { fetchCountries } from '../helpers/get_functions';
 
 const SOURCES = ['egypte', 'vietnam'];
 

@@ -74,7 +74,7 @@ class Personnel(db.Model):
 # -----------------------------
 class OperationCommerciale(db.Model):
     __tablename__ = 'operations_commerciales'
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     type_op = db.Column(db.Enum(TypeOperation), nullable=False)
     responsable_id = db.Column(db.String, db.ForeignKey('personnel.id'))
     marge = db.Column(db.Float)
@@ -101,7 +101,7 @@ class Formation(db.Model):
 # -----------------------------
 class Article(db.Model):
     __tablename__ = 'articles'
-    id = db.Column(db.Integer, primary_key=True)  # Identifiant du produit
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)  # Identifiant du produit
     zone = db.Column(db.Integer, nullable=False)  # Unique per Innov3D group
     etat_emballage = db.Column(db.Enum(EtatEmballage))
     responsable_id = db.Column(db.String, db.ForeignKey('personnel.id'))
@@ -114,7 +114,7 @@ class Article(db.Model):
 # -----------------------------
 class Surveillance(db.Model):
     __tablename__ = 'surveillance'
-    zone = db.Column(db.Integer, primary_key=True)  # Unique per Innov3D group
+    zone = db.Column(db.Integer, primary_key=True, autoincrement=True)  # Unique per Innov3D group
     drones_actifs = db.Column(db.Integer)
     drones_panne = db.Column(db.Integer)
     drones_rechargement = db.Column(db.Integer)

@@ -177,11 +177,11 @@ export function UserTableRow({
         >
           <MenuItem onClick={handleClosePopover}>
             <Iconify icon="solar:pen-bold" />
-            Edit
+            Modifier
           </MenuItem>
           <MenuItem onClick={handleClosePopover} sx={{ color: 'error.main' }}>
             <Iconify icon="solar:trash-bin-trash-bold" />
-            Delete
+            Supprimer
           </MenuItem>
         </MenuList>
       </Popover>

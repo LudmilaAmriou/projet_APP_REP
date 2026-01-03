@@ -1,6 +1,9 @@
+import { TYPE_OPERATION_OPTIONS } from 'src/_mytypes/_data';
+
 import { TableView } from '../data-table-view';
 import General from '../../../services/General';
 
+import type { FieldConfig } from '../add-item-dialog';
 import type { ColumnConfig } from '../dynamictable-row';
 import type { Operations } from '../../../services/General';
 
@@ -51,7 +54,21 @@ const OPERATION_COLUMNS: ColumnConfig[] = [
   },
 ];
 
+const OPERATION_ADD_FIELDS: FieldConfig[] = [
+  { id: "type_op", label: "Type d’opération", type: "select", options: TYPE_OPERATION_OPTIONS },
+  { id: "responsable_id", label: "Responsable (ID personnel)", type: "text" },
+  { id: "marge", label: "Marge", type: "number" },
+  { id: "km_parcourus", label: "KM parcourus", type: "number" },
+  { id: "mot_cle_responsable", label: "Mot-clé responsable", type: "text" },
+  { id: "mot_cle_client", label: "Mot-clé client", type: "text" },
+];
+
+
 export function OperationsView() {
+  function handleAdd(values: Partial<Operations>): Promise<void> {
+    throw new Error('Function not implemented.');
+  }
+
   return (
     <TableView<Operations>
       title="Opérations"
@@ -59,6 +76,8 @@ export function OperationsView() {
       columns={OPERATION_COLUMNS}
       nameField="id"
       defaultOrderBy="id" 
+      addFields={OPERATION_ADD_FIELDS}
+      onAdd={handleAdd}
     />
   );
 }

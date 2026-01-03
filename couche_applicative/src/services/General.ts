@@ -1,7 +1,9 @@
-
 // General.ts
-import { fetchData } from '../helpers/endpoints';
+import { fetchData } from '../helpers/get_functions';
 
+// -----------------------------
+// Types
+// -----------------------------
 export type Personnels = {
   id: string;
   nom_prenom: string;
@@ -53,22 +55,24 @@ export type Formations = {
   personnel_name: string;
 };
 
-
+// -----------------------------
+// General service
+// -----------------------------
 const General = {
   getPersonnel: async (): Promise<Personnels[]> =>
-    fetchData("General", "Personnel"),
-    
+    ((await fetchData("General", "Personnel")) as Personnels[] | null) ?? [],
+
   getSurveillance: async (): Promise<Surveillance[]> =>
-    fetchData("General", "Surveillance"),
-    
+    ((await fetchData("General", "Surveillance")) as Surveillance[] | null) ?? [],
+
   getArticles: async (): Promise<Articles[]> =>
-    fetchData("General", "Articles"),
-    
+    ((await fetchData("General", "Articles")) as Articles[] | null) ?? [],
+
   getOperations: async (): Promise<Operations[]> =>
-    fetchData("General", "Operations"),
-    
+    ((await fetchData("General", "Operations")) as Operations[] | null) ?? [],
+
   getFormations: async (): Promise<Formations[]> =>
-    fetchData("General", "Formations"),
+    ((await fetchData("General", "Formations")) as Formations[] | null) ?? [],
 };
 
 export default General;

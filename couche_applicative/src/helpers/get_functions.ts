@@ -1,7 +1,5 @@
-// src/api/endpoints.js
-
+// src/api/endpoints.ts
 import { BASE_URLS } from './base_urls';
-
 
 export const SERVICES = [
   "Finance & Contrôle de Gestion",
@@ -11,34 +9,28 @@ export const SERVICES = [
   "Achats",
   "Collecte",
   "Assistance Technique"
-];
+] as const;
 
-// Structure: SERVICE → METRIC → COUNTRY → ENDPOINTS
-export const API_ENDPOINTS = {
+type ServiceName = typeof SERVICES[number];
 
+type EndpointMap = Record<string, string[]>; // country → endpoints
+type MetricMap = Record<string, EndpointMap>; // metric → EndpointMap
+type ApiEndpoints = Record<ServiceName | 'General', MetricMap>;
+
+export const API_ENDPOINTS: ApiEndpoints = {
   "General": {
-  Personnel: { brazil: [`${BASE_URLS.brazil}/general/personnel`] },
-  Articles: { brazil: [`${BASE_URLS.brazil}/general/articles`] },
-  Operations: { brazil: [`${BASE_URLS.brazil}/general/operations`] },
-  Formations: { brazil: [`${BASE_URLS.brazil}/general/formations`] },
-  Surveillance: { brazil: [`${BASE_URLS.brazil}/general/surveillance`] },
-},
+    Personnel: { brazil: [`${BASE_URLS.brazil}/general/personnel`] },
+    Articles: { brazil: [`${BASE_URLS.brazil}/general/articles`] },
+    Operations: { brazil: [`${BASE_URLS.brazil}/general/operations`] },
+    Formations: { brazil: [`${BASE_URLS.brazil}/general/formations`] },
+    Surveillance: { brazil: [`${BASE_URLS.brazil}/general/surveillance`] },
+  },
   "Finance & Contrôle de Gestion": {
-    A: {
-      brazil: [`${BASE_URLS.brazil}/finance_gestion/responsable/max_km`]
-    },
-    B: {
-      brazil: [`${BASE_URLS.brazil}/finance_gestion/drone/plus_ancien`],
-    },
-    C: {
-      brazil: [`${BASE_URLS.brazil}/finance_gestion/marges_par_responsable`]
-    },
-    D: {
-      brazil: [`${BASE_URLS.brazil}/finance_gestion/operations_par_type`]
-    },
-    E: {
-      brazil: [`${BASE_URLS.brazil}/finance_gestion/responsable/max_km_per_source`]
-    }
+    A: { brazil: [`${BASE_URLS.brazil}/finance_gestion/responsable/max_km`] },
+    B: { brazil: [`${BASE_URLS.brazil}/finance_gestion/drone/plus_ancien`] },
+    C: { brazil: [`${BASE_URLS.brazil}/finance_gestion/marges_par_responsable`] },
+    D: { brazil: [`${BASE_URLS.brazil}/finance_gestion/operations_par_type`] },
+    E: { brazil: [`${BASE_URLS.brazil}/finance_gestion/responsable/max_km_per_source`] },
   },
   "Juridique": {
     B: {
@@ -47,39 +39,34 @@ export const API_ENDPOINTS = {
     }
   },
   "Direction Générale": {
-    A: {
-      egypte: [`${BASE_URLS.egypte}/direction_generale/employes_total`],
-    }
+    A: { egypte: [`${BASE_URLS.egypte}/direction_generale/employes_total`] }
   },
   "Informatique": {
     B: {
       egypte: [`${BASE_URLS.egypte}/informatique/nb_non_informatique`],
       vietnam: [`${BASE_URLS.vietnam}/informatique/nb_non_informatique`]
-
     }
   },
   "Achats": {
-    A: {
-      canada: [`${BASE_URLS.canada}/assistance_commerciale/achats`]
-    }
+    A: { canada: [`${BASE_URLS.canada}/assistance_commerciale/achats`] }
   },
   "Collecte": {
     B: {
       canada: [`${BASE_URLS.canada}/assistance_commerciale/responsables_vente`],
       france: [`${BASE_URLS.france}/assistance_commerciale/responsables_vente`]
-
     }
   },
   "Assistance Technique": {
-    A: {
-      brazil: [`${BASE_URLS.brazil}/assistance_commerciale/zone/co2_min`]
-    }
+    A: { brazil: [`${BASE_URLS.brazil}/assistance_commerciale/zone/co2_min`] }
   }
 };
 
-
 /// --- Fetch helper for a single country ---
-export async function fetchData(service, metric, country = "brazil") {
+export async function fetchData(
+  service: ServiceName | 'General',
+  metric: string,
+  country = "brazil"
+): Promise<any | null> {
   const metricObj = API_ENDPOINTS[service]?.[metric];
   if (!metricObj || !metricObj[country]) return null;
 
@@ -98,13 +85,13 @@ export async function fetchData(service, metric, country = "brazil") {
 }
 
 // --- Fetch multiple countries with adapters ---
-export async function fetchCountries(
-  service,
-  metric,
-  countries,
-  adapters
-) {
-  const results = [];
+export async function fetchCountries<T>(
+  service: ServiceName,
+  metric: string,
+  countries: string[],
+  adapters: Record<string, (d: any) => T>
+): Promise<T[]> {
+  const results: T[] = [];
 
   for (const country of countries) {
     try {

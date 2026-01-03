@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -17,10 +17,14 @@ import { Scrollbar } from 'src/components/scrollbar';
 
 import { UserTableHead } from './table-head';
 import { TableNoData } from './table-no-data';
+import { UserTableRow } from './dynamictable-row';
 import { emptyRows, getComparator } from './utils';
 import { UserTableToolbar } from './table-toolbar';
 import { TableEmptyRows } from './table-empty-rows';
-import { UserTableRow, ColumnConfig } from './dynamictable-row';
+import { DynamicAddDialog } from './add-item-dialog';
+
+import type { FieldConfig } from './add-item-dialog';
+import type { ColumnConfig } from './dynamictable-row';
 
 type TableViewProps<T> = {
   title: string;
@@ -28,7 +32,9 @@ type TableViewProps<T> = {
   columns: ColumnConfig[];
   nameField: keyof T;
   defaultOrderBy: keyof T;
-  idField?: keyof T; // optional, default 'id'
+  idField?: keyof T; // default 'id'
+  addFields?: FieldConfig[]; // dynamic fields for the dialog
+  onAdd?: (values: Partial<T>) => Promise<void>; // optional add handler
 };
 
 export function TableView<T extends Record<string, any>>({
@@ -38,17 +44,21 @@ export function TableView<T extends Record<string, any>>({
   nameField,
   defaultOrderBy,
   idField = 'id',
+  addFields,
+  onAdd,
 }: TableViewProps<T>) {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
   const [selected, setSelected] = useState<string[]>([]);
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const [orderBy, setOrderBy] = useState<keyof T>(defaultOrderBy);
-
   const [rows, setRows] = useState<T[]>([]);
   const [filterName, setFilterName] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   // get string ID from row
   const getRowId = useCallback((row: T) => String(row[idField]), [idField]);
@@ -90,23 +100,23 @@ export function TableView<T extends Record<string, any>>({
   );
 
   // fetch data
-  useEffect(() => {
-    const load = async () => {
-      try {
-        setLoading(true);
-        const data = await fetchData();
-        console.log('Fetched data:', data); // debug
-        setRows(data || []);
-        setError('');
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load data.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+  const loadData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const data = await fetchData();
+      setRows(data || []);
+      setError('');
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load data.');
+    } finally {
+      setLoading(false);
+    }
   }, [fetchData]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const dataFiltered = useMemo(() => {
     const filtered = rows.filter((r) =>
@@ -118,16 +128,40 @@ export function TableView<T extends Record<string, any>>({
 
   const notFound = !dataFiltered.length && !!filterName;
 
+  // handle add
+  const handleAddNew = async (values: Partial<T>) => {
+    if (onAdd) await onAdd(values);
+    await loadData();
+    setDialogOpen(false);
+  };
+
   return (
     <DashboardContent>
       <Box sx={{ mb: 5, display: 'flex', alignItems: 'center' }}>
         <Typography variant="h4" sx={{ flexGrow: 1 }}>
           {title}
         </Typography>
-        <Button variant="contained" color="inherit" startIcon={<Iconify icon="mingcute:add-line" />}>
-          Nouveau
-        </Button>
+
+        {addFields && onAdd && (
+          <Button
+            variant="contained"
+            color="inherit"
+            startIcon={<Iconify icon="mingcute:add-line" />}
+            onClick={() => setDialogOpen(true)}
+          >
+            Nouveau
+          </Button>
+        )}
       </Box>
+
+      {addFields && onAdd && (
+        <DynamicAddDialog<T>
+          open={dialogOpen}
+          onClose={() => setDialogOpen(false)}
+          fields={addFields}
+          onSubmit={handleAddNew}
+        />
+      )}
 
       {error && (
         <Typography color="error" sx={{ mb: 2 }}>

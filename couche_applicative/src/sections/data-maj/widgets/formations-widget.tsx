@@ -1,6 +1,7 @@
 import { TableView } from '../data-table-view';
 import General from '../../../services/General';
 
+import type { FieldConfig } from '../add-item-dialog';
 import type { ColumnConfig } from '../dynamictable-row';
 import type { Formations } from '../../../services/General';
 
@@ -44,7 +45,19 @@ const FORMATION_COLUMNS: ColumnConfig[] = [
   { id: 'mot_cle_personnel', label: 'Mot le plus utilisé (Personnel)', type: 'text' }, 
 ];
 
+const FORMATION_ADD_FIELDS: FieldConfig[] = [
+  { id: 'nom_formation', label: 'Nom Formation', type: 'text' },
+  { id: 'sujet', label: 'Sujet', type: 'text' },
+  { id: 'date_formation', label: 'Date', type: 'date' },
+  { id: 'pourcentage_engagement', label: 'Engagement (%)', type: 'number' },
+  { id: 'pourcentage_satisfaction', label: 'Satisfaction (%)', type: 'number' },
+];
+
 export function FormationsView() {
+  function handleAdd(values: Partial<Formations>): Promise<void> {
+    throw new Error('Function not implemented.');
+  }
+
   return (
     <TableView<Formations>
       title="Formations"
@@ -52,6 +65,8 @@ export function FormationsView() {
       columns={FORMATION_COLUMNS}
       nameField="nom_formation"
       defaultOrderBy="nom_formation"
+      addFields={FORMATION_ADD_FIELDS}
+      onAdd={handleAdd}
     />
   );
 }

@@ -1,8 +1,11 @@
 import React from 'react';
 
+import { ETAT_OPTIONS, SERVICE_OPTIONS } from 'src/_mytypes/_data';
+
 import { TableView } from '../data-table-view';
 import  General from '../../../services/General';
 
+import type { FieldConfig } from '../add-item-dialog';
 import type { ColumnConfig } from '../dynamictable-row';
 import type { Personnels } from '../../../services/General';
 
@@ -32,14 +35,33 @@ const PERSONNEL_COLUMNS: ColumnConfig[] = [
   { id: 'position', label: 'Position', type: 'text' },
 ];
 
+
+const PERSONNEL_ADD_FIELDS: FieldConfig[] = [
+  { id: "nom_prenom", label: "Nom & Prénom", type: "text" },
+
+  { id: "etat", label: "État", type: "select", options: ETAT_OPTIONS },
+
+  { id: "service", label: "Service", type: "select", options: SERVICE_OPTIONS },
+
+  { id: "frequence_cardiaque", label: "Fréquence cardiaque", type: "number" },
+  { id: "position", label: "Position (lat,lon)", type: "text" },
+];
+
+
 export function PersonnelView() {
+  function handleAdd(values: Partial<Personnels>): Promise<void> {
+    throw new Error('Function not implemented.');
+  }
+
   return (
-    <TableView<Personnels>
-      title="Personnel"
+      <TableView<Personnels>
+      title="Personnels"
       fetchData={General.getPersonnel}
       columns={PERSONNEL_COLUMNS}
       nameField="nom_prenom"
       defaultOrderBy="nom_prenom"
+      addFields={PERSONNEL_ADD_FIELDS}
+      onAdd={handleAdd}
     />
   );
 }

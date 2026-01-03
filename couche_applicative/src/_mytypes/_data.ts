@@ -16,19 +16,6 @@ export const _myAccount = {
 
 // ----------------------------------------------------------------------
 
-const COLORS = [
-  '#00AB55',
-  '#000000',
-  '#FFFFFF',
-  '#FFC0CB',
-  '#FF4842',
-  '#1890FF',
-  '#94D82D',
-  '#FFC107',
-];
-
-// ----------------------------------------------------------------------
-
 
 export type CountryType = 'br' | 'us' | 'eg' | 'vt' | 'au' | 'ca' | 'fr' | 'ch' | 'al' ;
 
@@ -205,3 +192,54 @@ export const CollecteAdapters: Record<string, (d: any) => ZoneAudit> = {
     source: 'france',
   }),
 };
+
+
+export const SERVICE_OPTIONS = [
+  "commercial",
+  "finance et gestion",
+  "ressources humaines",
+  "juridique",
+  "logistique",
+  "assistance commerciale",
+  "direction générale",
+  "maintenance",
+  "achats",
+  "cyber sécurité",
+  "recherche et développement",
+  "informatique",
+  "qualité",
+  "collecte",
+  "marketing",
+  "industriel",
+  "assistance technique",
+  "analyse des données",
+];
+
+
+
+export const ETAT_OPTIONS = [
+  "actif",
+  "repos",
+  "arrêt maladie",
+  "congé",
+];
+// ----------------------------------------------------------------------
+
+
+export const DETECTION_FORME_OPTIONS = [
+  "aucune",
+  "personnel non identifiée",
+  "objet non identifié",
+];
+
+
+
+export const TYPE_OPERATION_OPTIONS = [
+  "Achat",
+  "Vente",
+];
+
+export const ETAT_EMBALLAGE_OPTIONS = [
+  "Correct",
+  "Déformé",
+];

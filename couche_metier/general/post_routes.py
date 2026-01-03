@@ -36,24 +36,29 @@ def require_api_key(f):
 @require_api_key
 def add_personnel():
     data = request.json
-    # validate required fields
     try:
         new_personnel = Personnel(
-            id=data["id"],  # social security number
+            id=data["id"],  # must be provided
             nom_prenom=data["nom_prenom"],
             etat=EtatPersonnel(data["etat"]),
             service=ServicePersonnel(data["service"]),
             frequence_cardiaque=data.get("frequence_cardiaque"),
             position=data.get("position")
         )
+        db.session.add(new_personnel)
+        db.session.commit()
     except KeyError as e:
+        db.session.rollback()
         return jsonify({"error": f"Missing field: {str(e)}"}), 400
     except ValueError as e:
+        db.session.rollback()
         return jsonify({"error": f"Invalid enum value: {str(e)}"}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
 
-    db.session.add(new_personnel)
-    db.session.commit()
     return jsonify({"status": "success", "id": new_personnel.id}), 201
+
 
 @write_bp.route("/personnel/<string:id>", methods=["PUT"])
 @require_api_key
@@ -93,20 +98,28 @@ def add_article():
     data = request.json
     try:
         a = Article(
-            zone=data["zone"],
+            zone=data["zone"],  # can be provided or auto-assigned if db autoincrement
             etat_emballage=EtatEmballage(data["etat_emballage"]) if data.get("etat_emballage") else None,
             responsable_id=data.get("responsable_id"),
             position=data.get("position"),
             rotation=data.get("rotation"),
             collisions=data.get("collisions", 0)
         )
+        db.session.add(a)
+        db.session.commit()
     except KeyError as e:
+        db.session.rollback()
         return jsonify({"error": f"Missing field: {str(e)}"}), 400
     except ValueError as e:
+        db.session.rollback()
         return jsonify({"error": f"Invalid enum value: {str(e)}"}), 400
-    db.session.add(a)
-    db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
     return jsonify({"status": "success", "id": a.id})
+
+
 
 @write_bp.route("/article/<int:id>", methods=["PUT"])
 @require_api_key
@@ -154,13 +167,21 @@ def add_operation():
             mot_cle_responsable=data.get("mot_cle_responsable"),
             mot_cle_client=data.get("mot_cle_client")
         )
+        db.session.add(op)
+        db.session.commit()
     except KeyError as e:
+        db.session.rollback()
         return jsonify({"error": f"Missing field: {str(e)}"}), 400
     except ValueError as e:
+        db.session.rollback()
         return jsonify({"error": f"Invalid enum value: {str(e)}"}), 400
-    db.session.add(op)
-    db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
     return jsonify({"status": "success", "id": op.id})
+
+
 
 @write_bp.route("/operation/<int:id>", methods=["PUT"])
 @require_api_key
@@ -202,13 +223,21 @@ def add_formation():
             mot_cle_formateur=data.get("mot_cle_formateur"),
             mot_cle_personnel=data.get("mot_cle_personnel")
         )
+        db.session.add(f)
+        db.session.commit()
     except KeyError as e:
+        db.session.rollback()
         return jsonify({"error": f"Missing field: {str(e)}"}), 400
     except ValueError as e:
+        db.session.rollback()
         return jsonify({"error": f"Invalid enum value: {str(e)}"}), 400
-    db.session.add(f)
-    db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
     return jsonify({"status": "success", "id": f.id})
+
+
 
 @write_bp.route("/formation/<int:id>", methods=["PUT"])
 @require_api_key
@@ -242,18 +271,27 @@ def delete_formation(id):
 @require_api_key
 def add_surveillance():
     data = request.json
-    s = Surveillance(
-        zone=data["zone"],
-        drones_actifs=data.get("drones_actifs"),
-        drones_panne=data.get("drones_panne"),
-        drones_rechargement=data.get("drones_rechargement"),
-        detection_incendie=data.get("detection_incendie"),
-        detection_forme=DetectionForme(data["detection_forme"]) if data.get("detection_forme") else None,
-        audit_conformite=data.get("audit_conformite")
-    )
-    db.session.add(s)
-    db.session.commit()
+    try:
+        s = Surveillance(
+            drones_actifs=data.get("drones_actifs"),
+            drones_panne=data.get("drones_panne"),
+            drones_rechargement=data.get("drones_rechargement"),
+            detection_incendie=data.get("detection_incendie"),
+            detection_forme=DetectionForme(data["detection_forme"]) if data.get("detection_forme") else None,
+            audit_conformite=data.get("audit_conformite")
+        )
+        db.session.add(s)
+        db.session.commit()
+    except ValueError as e:
+        db.session.rollback()
+        return jsonify({"error": f"Invalid value: {e}"}), 400
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"Server error: {str(e)}"}), 500
+
     return jsonify({"status": "success", "zone": s.zone})
+
+
 
 @write_bp.route("/surveillance/<int:zone>", methods=["PUT"])
 @require_api_key

@@ -170,7 +170,7 @@ function TaskItem({ item, selected, onChange, sx, ...other }: TaskItemProps) {
 
           <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>
             <Iconify icon="solar:trash-bin-trash-bold" />
-            Delete
+            Supprimer
           </MenuItem>
         </MenuList>
       </Popover>

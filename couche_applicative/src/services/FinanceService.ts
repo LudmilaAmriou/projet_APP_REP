@@ -1,5 +1,5 @@
 // FinanceService.ts
-import { fetchData } from '../helpers/endpoints';
+import { fetchData } from '../helpers/get_functions';
 
 export type MaxKmType = { identifiant: string; responsable: string; total_km_parcourus: number };
 export type OldestDroneType = { drone_age: number };
