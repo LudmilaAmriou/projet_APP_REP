@@ -27,6 +27,7 @@ import type { FieldConfig } from './add-item-dialog';
 import type { ColumnConfig } from './dynamictable-row';
 
 type TableViewProps<T> = {
+  tableName: string;
   title: string;
   fetchData: () => Promise<T[]>;
   columns: ColumnConfig[];
@@ -34,10 +35,11 @@ type TableViewProps<T> = {
   defaultOrderBy: keyof T;
   idField?: keyof T; // default 'id'
   addFields?: FieldConfig[]; // dynamic fields for the dialog
-  onAdd?: (values: Partial<T>) => Promise<void>; // optional add handler
+  onAdd?: (values: Partial<T>) => Promise<Partial<T>>; // optional add handler
 };
 
 export function TableView<T extends Record<string, any>>({
+  tableName,
   title,
   fetchData,
   columns,
@@ -78,6 +80,14 @@ export function TableView<T extends Record<string, any>>({
     },
     []
   );
+  const handleUpdateRow = (id: string, updatedValues: Record<string, any>) => {
+    setRows((prev) =>
+      prev.map((row) => (getRowId(row) === id ? { ...row, ...updatedValues } : row))
+    );
+  }
+  const handleDeleteRow = (id: string) => {
+    setRows(prev => prev.filter(r => r.id !== id));
+  };
 
   const onSelectRow = useCallback(
     (inputValue: string) => {
@@ -130,10 +140,23 @@ export function TableView<T extends Record<string, any>>({
 
   // handle add
   const handleAddNew = async (values: Partial<T>) => {
-    if (onAdd) await onAdd(values);
-    await loadData();
+  try {
+    if (!onAdd) return;
+    
+    const newRow = await onAdd(values); // now returns the row with key
+    if (!newRow) {
+      console.warn("No row returned from onAdd");
+      setDialogOpen(false);
+      return;
+    }
+
+    setRows(prev => [...prev, newRow as T]); // add immediately
     setDialogOpen(false);
-  };
+  } catch (err) {
+    console.error(err);
+  }
+};
+
 
   return (
     <DashboardContent>
@@ -159,6 +182,7 @@ export function TableView<T extends Record<string, any>>({
           open={dialogOpen}
           onClose={() => setDialogOpen(false)}
           fields={addFields}
+          initialValues={{}}
           onSubmit={handleAddNew}
         />
       )}
@@ -206,13 +230,18 @@ export function TableView<T extends Record<string, any>>({
                     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                     .map((row) => (
                       <UserTableRow
+                        tableName={tableName}
                         key={getRowId(row)}
                         row={row}
                         columns={columns}
                         selected={selected.includes(getRowId(row))}
                         onSelectRow={() => onSelectRow(getRowId(row))}
                         nameField={nameField as string}
+                        onUpdate={handleUpdateRow} // updates row in state
+                        onDelete={handleDeleteRow} // deletes row from state
+                        editFields={addFields}
                       />
+
                     ))
                 )}
 

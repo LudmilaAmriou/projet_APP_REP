@@ -1,4 +1,6 @@
+import { API_KEY } from 'src/helpers/config';
 import { TYPE_OPERATION_OPTIONS } from 'src/_mytypes/_data';
+import { API_URL, handleAddGeneral } from 'src/helpers/post_functions';
 
 import { TableView } from '../data-table-view';
 import General from '../../../services/General';
@@ -56,7 +58,7 @@ const OPERATION_COLUMNS: ColumnConfig[] = [
 
 const OPERATION_ADD_FIELDS: FieldConfig[] = [
   { id: "type_op", label: "Type d’opération", type: "select", options: TYPE_OPERATION_OPTIONS },
-  { id: "responsable_id", label: "Responsable (ID personnel)", type: "text" },
+  { id: "responsable_id", label: "Responsable (Numéro de sécurité sociale)", type: "text" },
   { id: "marge", label: "Marge", type: "number" },
   { id: "km_parcourus", label: "KM parcourus", type: "number" },
   { id: "mot_cle_responsable", label: "Mot-clé responsable", type: "text" },
@@ -65,12 +67,29 @@ const OPERATION_ADD_FIELDS: FieldConfig[] = [
 
 
 export function OperationsView() {
-  function handleAdd(values: Partial<Operations>): Promise<void> {
-    throw new Error('Function not implemented.');
-  }
+  async function handleAdd(values: Partial<Operations>): Promise<Partial<Operations>> {
+
+  // Send POST request, will throw if backend fails
+  const result = await handleAddGeneral({
+    table: "operation",
+    values,
+    apiUrl: API_URL,
+    apiKey: API_KEY,
+  });
+
+  console.log('Operation added successfully');
+
+  return {
+    ...values,
+    id: result.id, // <-- use backend's returned unique identifier
+  };
+
+}
+
 
   return (
     <TableView<Operations>
+      tableName="operation"
       title="Opérations"
       fetchData={General.getOperations}
       columns={OPERATION_COLUMNS}

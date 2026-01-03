@@ -57,8 +57,8 @@ export type TableType =
 export const _notifications = [
   {
     id: _id(1),
-    title: 'Your order is placed',
-    description: 'waiting for shipping',
+    title: 'Nouvelle commande enregistrée',
+    description: 'En attente de traitement',
     avatarUrl: null,
     type: 'order-placed',
     postedAt: _times(1),
@@ -67,7 +67,7 @@ export const _notifications = [
   {
     id: _id(2),
     title: _fullName(2),
-    description: 'answered to your comment on the Innov3D channel',
+    description: 'a répondu à votre commentaire sur le canal Innov3D',
     avatarUrl: '/assets/images/avatar/avatar-2.webp',
     type: 'friend-interactive',
     postedAt: _times(2),
@@ -75,8 +75,8 @@ export const _notifications = [
   },
   {
     id: _id(3),
-    title: 'You have new message',
-    description: '5 unread messages',
+    title: 'Nouveau message',
+    description: '5 messages non lus',
     avatarUrl: null,
     type: 'chat-message',
     postedAt: _times(3),
@@ -84,23 +84,24 @@ export const _notifications = [
   },
   {
     id: _id(4),
-    title: 'You have new mail',
-    description: 'sent from Guido Padberg',
+    title: 'Nouvelle alerte de surveillance',
+    description: 'Détection incendie dans la zone 3',
     avatarUrl: null,
-    type: 'mail',
+    type: 'surveillance-alert',
     postedAt: _times(4),
     isUnRead: false,
   },
   {
     id: _id(5),
-    title: 'Delivery processing',
-    description: 'Your order is being shipped',
+    title: 'Article expédié',
+    description: 'L’article dans la zone 7 est en cours de livraison',
     avatarUrl: null,
     type: 'order-shipped',
     postedAt: _times(5),
     isUnRead: false,
   },
 ];
+
 
 
 

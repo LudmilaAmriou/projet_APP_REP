@@ -1,109 +1,141 @@
+// utils/handleApi.ts
 import { BASE_URLS } from "./base_urls";
-
 
 export const API_URL = `${BASE_URLS.brazil}/write`;
 
-// utils/handleAdd.ts
-export type TableName =
-  | "personnel"
-  | "article"
-  | "operation"
-  | "formation"
-  | "surveillance";
 
-export type ServiceType =
-  | "Finance"
-  | "Juridique"
-  | "Direction générale"
-  | "Achats"
-  | "Informatique"
-  | "Collecte"
-  | "Assistance technique";
 
-interface HandleAddOptions {
-  table: TableName;
-  values: Record<string, any>;
+export interface HandleOptions {
+  table: string;
+  values?: Record<string, any>; // optional for delete
   apiUrl: string;
   apiKey: string;
+  id?: string | number; // for edit/delete
 }
 
-
-
+// ----- centralized endpoint map -----
+const ENDPOINT_MAP: Record<string, string> = {
+  personnel: "/personnel",
+  article: "/article",
+  operation: "/operation",
+  formation: "/formation",
+  surveillance: "/surveillance",
+};
 
 /**
- * Normalizes payload and sends POST request to backend.
+ * Normalizes payload (numbers, booleans, dates) before sending to backend
  */
-export async function handleAddGeneral({
-  table,
-  values,
-  apiUrl,
-  apiKey,
-}: HandleAddOptions) {
-  // Clone values so we don't mutate the original object
-  const payload: Record<string, any> = { ...values };
+function normalizePayload(payload: Record<string, any>) {
+  const numericFields = [
+    "marge",
+    "km_parcourus",
+    "collisions",
+    "frequence_cardiaque",
+    "pourcentage_engagement",
+    "pourcentage_satisfaction",
+  ];
 
-  // ---- Numeric fields ----
-  ["zone", "marge", "km_parcourus", "collisions", "frequence_cardiaque", "pourcentage_engagement", "pourcentage_satisfaction"].forEach(
-    (field) => {
-      if (payload[field] !== undefined && payload[field] !== "") {
-        payload[field] = Number(payload[field]);
-      }
+  numericFields.forEach((field) => {
+    if (payload[field] !== undefined && payload[field] !== "") {
+      payload[field] = Number(payload[field]);
     }
-  );
+  });
 
-  // ---- Boolean fields ----
-  ["detection_incendie", "audit_conformite"].forEach((field) => {
+  const booleanFields = ["detection_incendie", "audit_conformite"];
+  booleanFields.forEach((field) => {
     if (payload[field] === "true") payload[field] = true;
     if (payload[field] === "false") payload[field] = false;
   });
 
-  // ---- Date fields ----
   if (payload.date_formation) {
     const date = new Date(payload.date_formation);
     if (!isNaN(date.getTime())) {
       payload.date_formation = date.toISOString();
     } else {
-      delete payload.date_formation; // invalid date, remove
+      delete payload.date_formation;
     }
   }
 
-  // ---- Enum normalization for ServiceType ----
-  if (payload.service) {
-    const service = String(payload.service);
-    
-    // Make sure casing matches your backend enum exactly
-    const mapping: Record<string, ServiceType> = {
-      finance: "Finance",
-      juridique: "Juridique",
-      "direction générale": "Direction générale",
-      achats: "Achats",
-      informatique: "Informatique",
-      collecte: "Collecte",
-      "assistance technique": "Assistance technique",
-    };
-    const key = service.toLowerCase();
-    if (mapping[key]) payload.service = mapping[key];
-    else console.warn(`Unknown service value: ${service}`);
-  }
+  if (payload.service) payload.service = String(payload.service);
 
-  // ---- Endpoint mapping ----
-  const endpointMap: Record<TableName, string> = {
-    personnel: "/personnel",
-    article: "/article",
-    operation: "/operation",
-    formation: "/formation",
-    surveillance: "/surveillance",
-  };
-  const endpoint = endpointMap[table];
+  return payload;
+}
 
-  // ---- Send POST request ----
-  const res = await fetch(`${apiUrl}${endpoint}`, {
+/**
+ * Add new row
+ */
+export async function handleAddGeneral({
+  table,
+  values = {},
+  apiUrl,
+  apiKey,
+}: HandleOptions) {
+  const payload = normalizePayload({ ...values });
+
+  const res = await fetch(`${apiUrl}${ENDPOINT_MAP[table]}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       "x-api-key": apiKey,
     },
     body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Erreur API (${res.status})`);
+  }
+
+  return res.json();
+}
+
+/**
+ * Edit existing row
+ */
+export async function handleEditGeneral({
+  table,
+  id,
+  values = {},
+  apiUrl,
+  apiKey,
+}: HandleOptions) {
+  if (!id) throw new Error("ID is required for edit");
+
+  const payload = normalizePayload({ ...values });
+
+  const res = await fetch(`${apiUrl}${ENDPOINT_MAP[table]}/${id}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Erreur API (${res.status})`);
+  }
+
+  return res.json();
+}
+
+/**
+ * Delete existing row
+ */
+export async function handleDeleteGeneral({
+  table,
+  id,
+  apiUrl,
+  apiKey,
+}: HandleOptions) {
+  if (!id) throw new Error("ID is required for delete");
+
+  const res = await fetch(`${apiUrl}${ENDPOINT_MAP[table]}/${id}`, {
+    method: "DELETE",
+    headers: {
+      "x-api-key": apiKey,
+    },
   });
 
   if (!res.ok) {

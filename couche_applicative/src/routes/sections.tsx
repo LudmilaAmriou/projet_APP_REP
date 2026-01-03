@@ -16,6 +16,8 @@ export const DashboardPage = lazy(() => import('src/pages/dashboard'));
 export const UpdatePage = lazy(() => import('src/pages/majData'));
 export const SignInPage = lazy(() => import('src/pages/sign-in'));
 export const Page404 = lazy(() => import('src/pages/page-not-found'));
+export const MaintenancePage = lazy(() => import('src/pages/maintenance'));
+
 
 const renderFallback = () => (
   <Box
@@ -64,5 +66,10 @@ export const routesSection: RouteObject[] = [
     element: <Page404 />,
   },
   { path: '*', element: <Page404 /> },
+  {
+  path: 'maintenance',
+  element: <MaintenancePage />,
+}
+
 ];
 

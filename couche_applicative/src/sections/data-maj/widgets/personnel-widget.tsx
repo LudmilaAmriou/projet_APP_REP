@@ -1,6 +1,8 @@
 import React from 'react';
 
+import { API_KEY } from 'src/helpers/config';
 import { ETAT_OPTIONS, SERVICE_OPTIONS } from 'src/_mytypes/_data';
+import { API_URL, handleAddGeneral } from 'src/helpers/post_functions';
 
 import { TableView } from '../data-table-view';
 import  General from '../../../services/General';
@@ -38,23 +40,40 @@ const PERSONNEL_COLUMNS: ColumnConfig[] = [
 
 const PERSONNEL_ADD_FIELDS: FieldConfig[] = [
   { id: "nom_prenom", label: "Nom & Prénom", type: "text" },
-
   { id: "etat", label: "État", type: "select", options: ETAT_OPTIONS },
-
   { id: "service", label: "Service", type: "select", options: SERVICE_OPTIONS },
-
   { id: "frequence_cardiaque", label: "Fréquence cardiaque", type: "number" },
   { id: "position", label: "Position (lat,lon)", type: "text" },
 ];
 
 
 export function PersonnelView() {
-  function handleAdd(values: Partial<Personnels>): Promise<void> {
-    throw new Error('Function not implemented.');
-  }
+
+ async function handleAdd(values: Partial<Personnels>): Promise<Partial<Personnels>> {
+    
+  if (!values.id) {
+      values.id = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    }
+    const result = await handleAddGeneral({
+      table: 'personnel',
+      values,
+      apiUrl: API_URL,
+      apiKey: API_KEY,
+    });
+   console.log('Personnel added successfully');
+
+   return {
+    ...values,
+    id: result.id, // <-- use backend's returned unique identifier
+  };
+
+   
+}
+
 
   return (
       <TableView<Personnels>
+      tableName="personnel"
       title="Personnels"
       fetchData={General.getPersonnel}
       columns={PERSONNEL_COLUMNS}

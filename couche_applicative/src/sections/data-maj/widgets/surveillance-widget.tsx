@@ -86,23 +86,27 @@ const SURVEILLANCE_ADD_FIELDS: FieldConfig[] = [
 
 export function SurveillanceView() {
 
-    async function handleAdd(values: Partial<Surveillance>): Promise<void> {
-    try {
-      await handleAddGeneral({
-        table: 'surveillance',  // maps to /write/surveillance
-        values,
-        apiUrl: API_URL,
-        apiKey: API_KEY,
-      });
-      // optional: show a success toast or message
-      console.log('Surveillance added successfully');
-    } catch (err: any) {
-      console.error('Failed to add surveillance:', err.message || err);
-      // optional: show an error toast
-    }
-  }
+  async function handleAdd(values: Partial<Surveillance>): Promise<Partial<Surveillance>> {
+  const result = await handleAddGeneral({
+    table: 'surveillance',  
+    values,
+    apiUrl: API_URL,
+    apiKey: API_KEY,
+  });
+
+  console.log('Surveillance added successfully', result);
+
+  // backend returns { status: 'success', zone: ... } for surveillance
+  // merge the returned key into the row values so we can add it to the table
+  return {
+    ...values,
+    zone: result.zone, // <-- use backend's returned unique identifier
+  };
+}
+
   return (
     <TableView<Surveillance>
+      tableName="surveillance"
       title="Surveillance"
       fetchData={General.getSurveillance}   // fetch table data
       columns={SURVEILLANCE_COLUMNS}        // table columns

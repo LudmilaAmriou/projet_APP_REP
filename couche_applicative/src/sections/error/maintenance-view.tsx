@@ -41,7 +41,17 @@ export function ComingSoonView() {
             my: { xs: 5, sm: 10 },
           }}
         />
+        
+        <Box sx={{ display: 'flex', gap: 2, mt: 3, flexWrap: 'wrap', justifyContent: 'center' }}>
+           <Button component={RouterLink} href="/dashboard" size="large" variant="outlined" color="inherit">
+            Aller au Dashboard
+          </Button>
 
+          <Button component={RouterLink} href="/mise-a-jour-data" size="large" variant="contained" color="inherit">
+            Aller à la mise à jour de données
+          </Button>
+         
+        </Box>
      
 
         <Typography sx={{ mt: 3, color: 'text.secondary', textAlign: 'center', fontSize: 14 }}>

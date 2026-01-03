@@ -1,19 +1,19 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 import {
   Box,
   Grid,
+  Alert,
   Dialog,
   Button,
   Switch,
   MenuItem,
+  Snackbar,
   TextField,
   DialogTitle,
   DialogContent,
   DialogActions,
   FormControlLabel,
-  Snackbar,
-  Alert,
 } from '@mui/material';
 
 export type FieldConfig = {
@@ -28,6 +28,7 @@ type DynamicAddDialogProps<T> = {
   onClose: () => void;
   fields: FieldConfig[];
   onSubmit: (values: Partial<T>) => Promise<void>;
+  initialValues?: Partial<T>; 
 };
 
 export function DynamicAddDialog<T>({
@@ -35,26 +36,42 @@ export function DynamicAddDialog<T>({
   onClose,
   fields,
   onSubmit,
+  initialValues = {},
 }: DynamicAddDialogProps<T>) {
   const [values, setValues] = useState<Record<string, any>>({});
   const [snackbar, setSnackbar] = useState<{ msg: string; severity: 'success' | 'error' } | null>(null);
+  const isEdit = Boolean(initialValues && Object.keys(initialValues).length > 0);
 
   const handleChange = (id: string, value: any) => {
     setValues(prev => ({ ...prev, [id]: value }));
   };
 
+ 
+useEffect(() => {
+  if (open) {
+    setValues(initialValues || {});
+  }
+}, [open, initialValues]);
+
+
 const handleSubmit = async () => {
   try {
     await onSubmit(values as Partial<T>);
     setValues({});
-    setSnackbar({ msg: 'Ajout effectué avec succès 🎉', severity: 'success' });
+    setSnackbar({
+      msg: isEdit
+        ? 'Modification effectuée avec succès 🎉'
+        : 'Ajout effectué avec succès 🎉',
+      severity: 'success',
+    });
     onClose();
   } catch (err: any) {
     console.error('Full error object:', err);
-    const message = err?.message || JSON.stringify(err) || 'Erreur lors de l’ajout ❌';
+    const message = err?.message || JSON.stringify(err) || 'Erreur lors de l’opération ❌';
     setSnackbar({ msg: message, severity: 'error' });
   }
 };
+
 
 
   const renderField = (f: FieldConfig) => {
@@ -114,10 +131,12 @@ const handleSubmit = async () => {
     );
   };
 
+
+
   return (
     <>
       <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-        <DialogTitle>Ajouter un nouvel élément</DialogTitle>
+       <DialogTitle>{isEdit ? 'Modifier l’élément' : 'Ajouter un nouvel élément'}</DialogTitle>
 
         <DialogContent>
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -134,8 +153,9 @@ const handleSubmit = async () => {
             Annuler
           </Button>
           <Button onClick={handleSubmit} variant="contained">
-            Ajouter
+            {isEdit ? 'Modifier' : 'Ajouter'}
           </Button>
+
         </DialogActions>
       </Dialog>
 
