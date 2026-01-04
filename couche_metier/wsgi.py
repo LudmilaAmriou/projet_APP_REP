@@ -8,7 +8,7 @@ from couche_metier.finance_gestion import finance_bp
 
 app = create_app()
 
-# Register blueprints
+# Enregistrement des blueprints
 app.register_blueprint(assistance_bp)
 app.register_blueprint(general_bp)
 app.register_blueprint(write_bp)

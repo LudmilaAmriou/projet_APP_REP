@@ -11,7 +11,7 @@ from .finance_gestion import finance_bp
 app = create_app()
 
 
-# Register blueprints
+#  Enregistrement des Blueprints
 app.register_blueprint(assistance_bp)
 app.register_blueprint(general_bp)
 app.register_blueprint(write_bp)

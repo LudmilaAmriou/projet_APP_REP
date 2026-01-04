@@ -7,14 +7,19 @@ from couche_data.db_connect import db
 from couche_data.db_tables import Personnel, OperationCommerciale, Surveillance
 from couche_metier.utils.data_agregation import aggregate_data_multi, build_id_map
 
-
+# Création du Blueprint pour le module Finance & Gestion
 finance_bp = Blueprint('finance', __name__, url_prefix='/finance_gestion')
 
+
 # -----------------------------
-# A -  Responsable ayant parcouru le plus de kilomètres
+# A - Responsable ayant parcouru le plus de kilomètres
 # -----------------------------
 @finance_bp.route('/responsable/max_km')
 def responsable_max_km():
+    """
+    Retourne le responsable ayant parcouru le plus de kilomètres,
+    en agrégeant la base locale et les APIs externes.
+    """
     df_all, sources_responded = aggregate_data_multi(
         local_query=db.session.query(OperationCommerciale.responsable_id, OperationCommerciale.km_parcourus),
         external_key="operations",
@@ -24,19 +29,17 @@ def responsable_max_km():
     )
 
     if df_all.empty:
-        return jsonify({"error": "No operations data available"}), 404
+        return jsonify({"error": "Pas de données d'opérations disponibles"}), 404
 
-    # Build personnel ID->name map
-     # --- 2) Build personnel map using general function ---
+    # --- Construction du mapping id -> nom du personnel ---
     personnel_map = build_id_map(
         local_query=db.session.query(Personnel.id, Personnel.nom_prenom),
         external_key="personnel",
         id_field="id",
         value_field="nomPrenom"
     )
-   
 
-    # Global max
+    # --- Calcul du total km par responsable ---
     agg = df_all.groupby("responsable_id", as_index=False)["km"].sum()
     max_row = agg.loc[agg["km"].idxmax()]
     resp_id = max_row["responsable_id"]
@@ -53,13 +56,15 @@ def responsable_max_km():
     })
 
 
-
-
 # -----------------------------
-# B - Drone le plus ancien 
+# B - Drone le plus ancien
 # -----------------------------
 @finance_bp.route('/drone/plus_ancien')
 def drone_plus_ancien():
+    """
+    Retourne la zone du drone le plus ancien, calculée à partir
+    des pannes et rechargements agrégés (DB locale + APIs externes).
+    """
     df_all, sources_responded = aggregate_data_multi(
         local_query=db.session.query(
             Surveillance.zone,
@@ -73,28 +78,16 @@ def drone_plus_ancien():
     )
 
     if df_all.empty:
-        return jsonify({"error": "No drone data available"}), 404
+        return jsonify({"error": "Pas de données drones disponibles"}), 404
 
-    # ---- Global aggregation across all sources ----
-    agg = (
-        df_all.groupby("zone", as_index=False)[["drones_panne", "drones_rechargement"]]
-        .sum()
-    )
-
-    # Compute drone age rule AFTER aggregation
+    # --- Agrégation globale ---
+    agg = df_all.groupby("zone", as_index=False)[["drones_panne", "drones_rechargement"]].sum()
     agg["drone_age"] = agg["drones_panne"] * 2 + agg["drones_rechargement"]
 
-    # Global max zone
+    # --- Trouver la zone du drone le plus ancien ---
     max_row = agg.loc[agg["drone_age"].idxmax()]
     zone_max = max_row["zone"]
-
-    # Find which source contributed the max zone (for reporting only)
-    source_max = (
-        df_all.loc[df_all["zone"] == zone_max, "source"]
-        .iloc[0]
-        if not df_all.loc[df_all["zone"] == zone_max].empty
-        else None
-    )
+    source_max = df_all.loc[df_all["zone"] == zone_max, "source"].iloc[0] if not df_all.loc[df_all["zone"] == zone_max].empty else None
 
     return jsonify({
         "zone": zone_max,
@@ -107,12 +100,14 @@ def drone_plus_ancien():
     })
 
 
-
 # -----------------------------
-# C - Total des marges par responsable (chart)
+# C - Total des marges par responsable
 # -----------------------------
 @finance_bp.route('/marges_par_responsable')
 def marges_par_responsable():
+    """
+    Retourne le total des marges par responsable pour chaque source.
+    """
     df_all, sources_responded = aggregate_data_multi(
         local_query=db.session.query(OperationCommerciale.responsable_id, OperationCommerciale.marge),
         external_key="operations",
@@ -122,9 +117,8 @@ def marges_par_responsable():
     )
 
     if df_all.empty:
-        return jsonify({"error": "No margin data available"}), 404
+        return jsonify({"error": "Pas de données sur les marges"}), 404
 
-    # Personnel map dynamically
     personnel_map = build_id_map(
         local_query=db.session.query(Personnel.id, Personnel.nom_prenom),
         external_key="personnel",
@@ -132,7 +126,7 @@ def marges_par_responsable():
         value_field="nomPrenom"
     )
 
-
+    # --- Calcul des marges totales par responsable et par source ---
     data = [
         {
             "source": source,
@@ -147,12 +141,14 @@ def marges_par_responsable():
     return jsonify(data)
 
 
-
 # -----------------------------
-# D - Nombre d’opérations par type (Achat/Vente) pour graphique
+# D - Nombre d’opérations par type (Achat/Vente)
 # -----------------------------
 @finance_bp.route('/operations_par_type')
 def operations_par_type():
+    """
+    Retourne le nombre d’opérations par type (Achat/Vente) pour chaque source.
+    """
     df_all, sources_responded = aggregate_data_multi(
         local_query=db.session.query(OperationCommerciale.type_op, OperationCommerciale.id),
         external_key="operations",
@@ -162,9 +158,9 @@ def operations_par_type():
     )
 
     if df_all.empty:
-        return jsonify({"error": "No operations data available"}), 404
+        return jsonify({"error": "Pas de données d'opérations disponibles"}), 404
 
-    # Convert enum to string
+    # --- Conversion des enums en chaînes de caractères ---
     df_all["type_op"] = df_all["type_op"].apply(lambda x: x.value if hasattr(x, "value") else str(x))
     df_all["count"] = 1
     agg = df_all.groupby(["type_op", "source"], as_index=False)["count"].sum()
@@ -173,22 +169,17 @@ def operations_par_type():
     return jsonify(data)
 
 
-
-
 # -----------------------------
 # E - Responsable ayant parcouru le plus de kilomètres par source
 # -----------------------------
 @finance_bp.route('/responsable/max_km_per_source')
 def max_km_per_source():
     """
-    Returns the personnel with the max km per source (local DB + each external API).
+    Retourne le responsable ayant parcouru le plus de kilomètres par source.
     """
-    # --- 1) Aggregate local + external sources ---
+    # --- Agrégation locale + externe ---
     df_all, sources_responded = aggregate_data_multi(
-        local_query=db.session.query(
-            OperationCommerciale.responsable_id,
-            OperationCommerciale.km_parcourus
-        ),
+        local_query=db.session.query(OperationCommerciale.responsable_id, OperationCommerciale.km_parcourus),
         external_key="operations",
         id_col="responsable_id",
         value_cols=["km"],
@@ -196,9 +187,8 @@ def max_km_per_source():
     )
 
     if df_all.empty:
-        return jsonify({"error": "No operations data available"}), 404
+        return jsonify({"error": "Pas de données d'opérations disponibles"}), 404
 
-    # --- 2) Build personnel map using general function ---
     personnel_map = build_id_map(
         local_query=db.session.query(Personnel.id, Personnel.nom_prenom),
         external_key="personnel",
@@ -206,7 +196,7 @@ def max_km_per_source():
         value_field="nomPrenom"
     )
 
-    # --- 3) Compute max km per source ---
+    # --- Calcul du max km par source ---
     result_list = []
     for source, df_source in df_all.groupby("source"):
         agg = df_source.groupby("responsable_id", as_index=False)["km"].sum()

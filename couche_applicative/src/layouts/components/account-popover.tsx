@@ -134,7 +134,7 @@ export function AccountPopover({ data = [], sx, ...other }: AccountPopoverProps)
             color="error"
             size="medium"
             variant="text"
-            onClick={() => router.push('/dashboard')} // <-- navigate to home
+            onClick={() => router.push('/')} // <-- navigate to home
           >
             Se déconnecter
           </Button>

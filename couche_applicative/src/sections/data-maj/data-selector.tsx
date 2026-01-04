@@ -1,7 +1,7 @@
 import type { TableType } from 'src/_mytypes/_data';
 
 // TableSelector.tsx
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
+import { Select, MenuItem, InputLabel, FormControl } from '@mui/material';
 
 type Props = {
   tableType: TableType;

@@ -33,7 +33,7 @@ type TableViewProps<T> = {
   columns: ColumnConfig[];
   nameField: keyof T;
   defaultOrderBy: keyof T;
-  idField?: keyof T; // default 'id'
+  idField?:string; // default 'id'
   addFields?: FieldConfig[]; // dynamic fields for the dialog
   onAdd?: (values: Partial<T>) => Promise<Partial<T>>; // optional add handler
 };
@@ -233,6 +233,7 @@ export function TableView<T extends Record<string, any>>({
                         tableName={tableName}
                         key={getRowId(row)}
                         row={row}
+                        idField = {idField}
                         columns={columns}
                         selected={selected.includes(getRowId(row))}
                         onSelectRow={() => onSelectRow(getRowId(row))}

@@ -3,10 +3,10 @@ import pandas as pd
 import os 
 import json
 
-
-
+# --- Chemin vers le dossier courant ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+# --- Charger la configuration des APIs externes depuis le fichier JSON ---
 config_path = os.path.join(BASE_DIR, "Innov3D_endpt.json")
 with open(config_path) as f:
     EXTERNAL_APIS = json.load(f)
@@ -14,15 +14,15 @@ with open(config_path) as f:
 
 def aggregate_data_multi(local_query=None, external_key=None, id_col=None, value_cols=None, local_source="local"):
     """
-    Aggregate local + external API data with multiple numeric columns.
+    Agrège les données locales et externes avec plusieurs colonnes numériques.
     Returns:
-        df_all: DataFrame with all sources
-        sources_responded: list of sources that responded
+        df_all: DataFrame contenant toutes les sources
+        sources_responded: liste des sources ayant répondu
     """
     df_all = pd.DataFrame(columns=[id_col] + value_cols + ["source"])
     sources_responded = []
 
-    # --- Local DB ---
+    # --- Base locale ---
     if local_query:
         try:
             local_data = local_query.all()
@@ -34,25 +34,26 @@ def aggregate_data_multi(local_query=None, external_key=None, id_col=None, value
         except:
             pass
 
-    # --- External APIs ---
+    # --- APIs externes ---
     for country, cfg in EXTERNAL_APIS.get(external_key, {}).items():
         try:
+            # Récupération des données externes
             ext_data = pd.DataFrame(requests.get(cfg["url"], timeout=10).json())
             if ext_data.empty:
                 continue
 
-            # Apply rename_map if present
+            # Appliquer le rename_map si présent
             if "rename_map" in cfg and cfg["rename_map"]:
                 ext_data = ext_data.rename(columns=cfg["rename_map"])
 
-            # Add source column
+            # Ajouter la colonne source
             ext_data["source"] = country
 
-            # Append only requested columns
+            # Concaténer uniquement les colonnes demandées
             df_all = pd.concat([df_all, ext_data[[id_col]+value_cols+["source"]]], ignore_index=True)
             sources_responded.append(country)
         except Exception as e:
-            print(f"Error fetching {external_key} for {country}: {e}")
+            print(f"Erreur lors de la récupération de {external_key} pour {country}: {e}")
             continue
 
     return df_all, sources_responded
@@ -60,21 +61,21 @@ def aggregate_data_multi(local_query=None, external_key=None, id_col=None, value
 
 def build_id_map(local_query=None, external_key=None, id_field=None, value_field=None):
     """
-    Builds a dict mapping ID -> value from local DB and external APIs.
+    Construit un dictionnaire mappant ID -> valeur à partir de la base locale et des APIs externes.
 
     Args:
-        local_query: SQLAlchemy query returning id_field and value_field or full objects
-        external_key: key in EXTERNAL_APIS (like 'personnel', 'operations', etc.)
-        id_field: column name to use as key (id)
-        value_field: column name to use as value (name or human-readable field)
+        local_query: requête SQLAlchemy renvoyant id_field et value_field ou objets complets
+        external_key: clé dans EXTERNAL_APIS (ex: 'personnel', 'operations', etc.)
+        id_field: nom de la colonne à utiliser comme clé (id)
+        value_field: nom de la colonne à utiliser comme valeur (nom ou champ lisible)
 
     Returns:
-        dict {id: value}
+        dict {id: valeur}
     """
     id_map = {}
 
     # ---------------------------
-    # Local DB
+    # Base locale
     # ---------------------------
     if local_query is not None:
         rows = local_query.all()
@@ -84,7 +85,7 @@ def build_id_map(local_query=None, external_key=None, id_field=None, value_field
             id_map.update(df_local.set_index(id_field)[value_field].astype(str).to_dict())
 
     # ---------------------------
-    # External APIs
+    # APIs externes
     # ---------------------------
     for cfg in EXTERNAL_APIS.get(external_key, {}).values():
         try:
@@ -101,7 +102,7 @@ def build_id_map(local_query=None, external_key=None, id_field=None, value_field
                 )
 
         except Exception as e:
-            print(f"Error fetching {external_key} from {cfg.get('url')}: {e}")
+            print(f"Erreur lors de la récupération de {external_key} depuis {cfg.get('url')}: {e}")
             continue
 
     return id_map

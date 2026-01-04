@@ -113,7 +113,6 @@ export function UserTableRow({
         apiKey: API_KEY || '', // or however you store your key
       });
 
-      // optional: update local row state immediately
       setRowData(prev => ({ ...prev, ...values }));
 
       // call parent callback if exists
@@ -127,8 +126,9 @@ export function UserTableRow({
 
   const renderCell = (column: ColumnConfig, value: any) => {
     // If custom render function provided, use it
+    
     if (column.render) {
-      return column.render(value, row);
+      return column.render(value, rowData);
     }
 
     // Handle different cell types
@@ -207,7 +207,7 @@ export function UserTableRow({
             component={column.type === 'avatar' ? 'th' : undefined}
             scope={column.type === 'avatar' ? 'row' : undefined}
           >
-            {renderCell(column, row[column.id])}
+            {renderCell(column, rowData[column.id])}
           </TableCell>
         ))}
 

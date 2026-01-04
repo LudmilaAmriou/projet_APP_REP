@@ -17,13 +17,13 @@ export function TableNoData({ searchQuery, ...other }: TableNoDataProps) {
       <TableCell align="center" colSpan={7}>
         <Box sx={{ py: 15, textAlign: 'center' }}>
           <Typography variant="h6" sx={{ mb: 1 }}>
-            Not found
+             Aucun résultat
           </Typography>
 
           <Typography variant="body2">
-            No results found for &nbsp;
+                 Aucun résultat trouvé pour&nbsp;
             <strong>&quot;{searchQuery}&quot;</strong>.
-            <br /> Try checking for typos or using complete words.
+            <br /> Essayez de vérifier les fautes de frappe ou d&apos;utiliser des mots complets.
           </Typography>
         </Box>
       </TableCell>

@@ -1,33 +1,33 @@
 from flask import Blueprint, jsonify
 from couche_data.db_connect import db
-from couche_data.db_tables import  OperationCommerciale
-from flask import Blueprint, jsonify
+from couche_data.db_tables import OperationCommerciale
 from couche_metier.utils.data_agregation import aggregate_data_multi
 
-
+# Création du Blueprint pour le module Assistance Commerciale
 assistance_bp = Blueprint('assistance', __name__, url_prefix='/assistance_commerciale')
 
+
 # -----------------------------
-# A - Zone avec le CO2 le plus faible (calcul déduit)
+# A - Zone avec le CO2 le plus faible
 # -----------------------------
 @assistance_bp.route('/zone/co2_min')
 def zone_co2_min():
     """
-    Returns the zone with the lowest CO2 level from external 'releves' API.
+    Retourne la zone avec le niveau de CO2 le plus faible
+    à partir des données des APIs externes 'releves'.
     """
-
-    # --- Aggregate only external 'releves' data ---
+    # --- Agrégation uniquement des données externes ---
     df_all, sources_responded = aggregate_data_multi(
         external_key="releves",
         id_col="zone",
         value_cols=["co2"],
-        local_source=None  # no local DB
+        local_source=None  # pas de DB locale
     )
 
     if df_all.empty:
-        return jsonify({"error": "No releves data available"}), 404
+        return jsonify({"error": "Pas de données relevés disponibles"}), 404
 
-    # --- Pick the zone with minimum CO2 ---
+    # --- Sélection de la zone avec CO2 minimal ---
     min_row = df_all.loc[df_all["co2"].idxmin()]
 
     return jsonify({
@@ -40,31 +40,31 @@ def zone_co2_min():
 
 
 # -----------------------------
-# B -  Nombre de responsables en vente
+# B - Nombre de responsables en vente
 # -----------------------------
 @assistance_bp.route('/responsables_vente')
 def responsables_vente():
     """
-    Returns the number of personnel who performed at least one 'vente' operation,
-    aggregating local DB + external APIs.
+    Retourne le nombre de responsables ayant effectué au moins
+    une opération de type 'vente', en agrégeant DB locale + APIs externes.
     """
-    # --- 1) Aggregate local + external 'operations' data ---
+    # --- Agrégation locale + externe pour opérations 'vente' ---
     df_all, sources_responded = aggregate_data_multi(
         local_query=db.session.query(
             OperationCommerciale.responsable_id,
-            OperationCommerciale.id,  # just to count operations
+            OperationCommerciale.id,
             OperationCommerciale.type_op
-        ).filter(OperationCommerciale.type_op == 'vente'),  # or TypeOperation.vente.value if Enum
+        ).filter(OperationCommerciale.type_op == 'vente'),
         external_key="operations",
         id_col="responsable_id",
-         value_cols=["id", "type_op"], # we just need to count operations
+        value_cols=["id", "type_op"],
         local_source="local (Brésil)"
     )
 
     if df_all.empty:
         return jsonify({"nombre_responsables_vente": 0, "sources_responded": [], "num_sources_responded": 0})
 
-    # --- 2) Count distinct responsables who had at least 1 vente ---
+    # --- Comptage distinct des responsables ---
     df_all = df_all[df_all["type_op"].str.lower() != "achat"]
     distinct_count = df_all["responsable_id"].nunique()
 
@@ -76,25 +76,25 @@ def responsables_vente():
 
 
 # -----------------------------
-# C - Zone avec le CO2 minimum par source
+# C - Zone avec le CO2 minimal par source
 # -----------------------------
 @assistance_bp.route('/zone/co2_min_per_source')
 def zone_co2_min_per_source():
     """
-    Returns the zone with the lowest CO2 level per source (external APIs only, grouped by country).
+    Retourne la zone avec le niveau de CO2 le plus faible
+    pour chaque source externe.
     """
-    # Aggregate only external 'releves' data
     df_all, sources_responded = aggregate_data_multi(
         external_key="releves",
         id_col="zone",
         value_cols=["co2"],
-        local_source=None  # no local DB
+        local_source=None  # pas de DB locale
     )
 
     if df_all.empty:
-        return jsonify({"error": "No releves data available"}), 404
+        return jsonify({"error": "Pas de données relevés disponibles"}), 404
 
-    # Group by source (country) and pick the min CO2 for each
+    # --- Minimum CO2 par source ---
     result_list = []
     for source, df_source in df_all.groupby("source"):
         min_row = df_source.loc[df_source["co2"].idxmin()]
@@ -113,28 +113,27 @@ def zone_co2_min_per_source():
 @assistance_bp.route('/responsables_vente_per_source')
 def responsables_vente_per_source():
     """
-    Returns the number of personnel who performed at least one 'vente' operation, grouped by source.
+    Retourne le nombre de responsables ayant effectué
+    au moins une vente, regroupé par source.
     """
-    # Aggregate local + external 'operations' data
     df_all, _ = aggregate_data_multi(
         local_query=db.session.query(
             OperationCommerciale.responsable_id,
-            OperationCommerciale.id,  # just to count operations
+            OperationCommerciale.id,
             OperationCommerciale.type_op
-        ).filter(OperationCommerciale.type_op == 'vente'),  # or TypeOperation.vente.value if Enum
+        ).filter(OperationCommerciale.type_op == 'vente'),
         external_key="operations",
         id_col="responsable_id",
-        value_cols=["id", "type_op"],  # counting operations
+        value_cols=["id", "type_op"],
         local_source="local (Brésil)"
     )
 
     if df_all.empty:
         return jsonify([])
-    
-    df_all = df_all[df_all["type_op"].str.lower() != "achat"]
-    distinct_count = df_all["responsable_id"].nunique()
 
-    # Count distinct responsables per source
+    df_all = df_all[df_all["type_op"].str.lower() != "achat"]
+
+    # --- Comptage distinct par source ---
     result_list = []
     for source, df_source in df_all.groupby("source"):
         distinct_count = df_source["responsable_id"].nunique()

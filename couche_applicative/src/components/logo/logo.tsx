@@ -20,13 +20,13 @@ export function Logo({
   sx,
   disabled,
   className,
-  href = '/',
+  href,
   isSingle = true,
   ...other
 }: LogoProps) {
   const theme = useTheme();
   const gradientId = useId();
-
+  const resolvedHref = href ?? (isSingle ? '/' : '/dashboard');
   // Theme Variables
   const TEXT_PRIMARY = theme.vars.palette.text.primary;
   const PRIMARY_MAIN = theme.vars.palette.primary.main;
@@ -79,7 +79,7 @@ export function Logo({
   return (
     <LogoRoot
       component={RouterLink}
-      href={href}
+      href={resolvedHref}
       aria-label="Innov3D Logo"
       underline="none"
       // className={mergeClasses([logoClasses.root, className])}
