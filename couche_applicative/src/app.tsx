@@ -23,7 +23,7 @@ export default function App({ children }: AppProps) {
     <Fab
       size="medium"
       aria-label="Github"
-      href="https://github.com/LudmilaAmriou"
+      href="https://github.com/LudmilaAmriou/projet_APP_REP"
       sx={{
         zIndex: 9,
         right: 20,
